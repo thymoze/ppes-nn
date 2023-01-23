@@ -2,9 +2,11 @@
 // #include <unordered_set>
 
 // template<typename T>
-// Variable<T>::Variable(double value) : shared_value(std::make_shared<double>(value)) {};
+// Variable<T>::Variable(double value) :
+// shared_value(std::make_shared<double>(value)) {};
 
-// Variable::Variable(double value, std::vector<Variable> inputs, GradFunc gradFunc)
+// Variable::Variable(double value, std::vector<Variable> inputs, GradFunc
+// gradFunc)
 //     : shared_value(std::make_shared<double>(value))
 // {
 //     shared_grad->inputs = std::move(inputs);
@@ -17,7 +19,8 @@
 //     auto dag = build();
 //     for (auto iter = dag.rbegin(); iter != dag.rend(); iter++) {
 //         if (iter->shared_grad->gradFunc) {
-//             iter->shared_grad->gradFunc(iter->shared_grad->inputs, iter->shared_grad->grad);
+//             iter->shared_grad->gradFunc(iter->shared_grad->inputs,
+//             iter->shared_grad->grad);
 //         }
 //     }
 // }

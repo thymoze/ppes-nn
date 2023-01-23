@@ -1,0 +1,20 @@
+root = true
+
+[*.{hpp,cpp,txt,cmake,editorconfig,clang-format}]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+
+[*.{hpp,cpp}]
+indent_size = 2
+indent_style = space
+max_line_length = 100
+
+[CMakeLists.txt]
+indent_size = 2
+indent_style = space
+max_line_length = 100
+[*.cmake]
+indent_size = 2
+indent_style = space
+max_line_length = 100

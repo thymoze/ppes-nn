@@ -1,4 +1,4 @@
 #pragma once
 
-#include "variable.hpp"
 #include "functions.hpp"
+#include "variable.hpp"
