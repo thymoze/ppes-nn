@@ -7,11 +7,11 @@ build:
     - apt update && apt install -y cmake/bullseye-backports
   script:
     - mkdir -p build && cd build
-    - ctest --version
     - cmake .. && make
   artifacts:
     paths:
       - build/
+    expire_in: 1 min
   cache:
     key: deps-cache
     paths:
@@ -32,9 +32,7 @@ test:
     - echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/sources.list.d/backports.list
     - apt update && apt install -y cmake/bullseye-backports
   script:
-    - cd build 
-    - ctest --output-junit test_results.xml
-    - ls -al
+    - cd build && ctest --output-junit test_results.xml
   artifacts:
     when: always
     paths:
