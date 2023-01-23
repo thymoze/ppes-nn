@@ -15,4 +15,8 @@ std::vector<Variable<double>> Sigmoid::forward(const std::vector<Variable<double
   return {x};
 }
 
+std::string Sigmoid::save(std::string model_name) {
+    return "nn::Sigmoid()";
+}
+
 }  // namespace nn

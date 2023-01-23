@@ -1,2 +1,5 @@
 .vscode
 build
+
+trained_models/*
+!trained_models/XOR_Model.hpp

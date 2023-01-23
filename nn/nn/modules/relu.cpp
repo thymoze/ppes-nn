@@ -13,4 +13,8 @@ std::vector<Variable<double>> ReLU::forward(const std::vector<Variable<double>>&
   return {x};
 }
 
+std::string ReLU::save(std::string model_name) {
+  return "nn::ReLU()";
+}
+
 }  // namespace nn
