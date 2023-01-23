@@ -78,6 +78,8 @@ class Matrix {
     return result;
   }
 
+  std::vector<T>& data() { return _data; }
+
   auto begin() { return _data.begin(); }
   auto cbegin() const { return _data.cbegin(); }
   auto end() { return _data.end(); }

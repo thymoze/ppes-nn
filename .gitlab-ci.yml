@@ -1,0 +1,43 @@
+image: gcc
+
+build:
+  stage: build
+  before_script:
+    - echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/sources.list.d/backports.list
+    - apt update && apt install -y cmake/bullseye-backports
+  script:
+    - mkdir -p build && cd build
+    - ctest --version
+    - cmake .. && make
+  artifacts:
+    paths:
+      - build/
+  cache:
+    key: deps-cache
+    paths:
+      - build/_deps
+
+format:
+  stage: test
+  allow_failure: true
+  before_script:
+    - apt update && apt install -y clang-format
+  script:
+    - find . -path ./build -prune -o -name "*.[c|h]pp" -exec clang-format -style=file -n -Werror {} +
+
+test:
+  stage: test
+  needs: [build]
+  before_script:
+    - echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/sources.list.d/backports.list
+    - apt update && apt install -y cmake/bullseye-backports
+  script:
+    - cd build 
+    - ctest --output-junit test_results.xml
+    - ls -al
+  artifacts:
+    when: always
+    paths:
+      - build/test_results.xml
+    reports:
+      junit: build/test_results.xml
