@@ -18,7 +18,6 @@ Linear::Linear(std::size_t input_size, std::size_t output_size, bool bias /* = t
     std::generate(weights.value().begin(), weights.value().end(), [&dis, &gen] { return dis(gen); } );
 
     if (bias) {
-        // TODO: Random init of shape (1, output)
         auto bias_weights = Variable<double>(Matrix<double>(1, num_out));
         std::generate(bias_weights.value().begin(), bias_weights.value().end(), [&dis, &gen] { return dis(gen); } );
         _params = { weights, bias_weights };

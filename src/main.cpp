@@ -1,11 +1,11 @@
-#include "autograd/autograd.hpp"
-#include "matrix/matrix.hpp"
-#include "nn/sequential.hpp"
-#include "nn/modules/linear.hpp"
-#include "nn/modules/relu.hpp"
-#include "nn/modules/sigmoid.hpp"
-#include "nn/mse.hpp"
-#include "nn/optim/sgd.hpp"
+#include <autograd/autograd.hpp>
+#include <matrix/matrix.hpp>
+#include <nn/sequential.hpp>
+#include <nn/modules/linear.hpp>
+#include <nn/modules/relu.hpp>
+#include <nn/modules/sigmoid.hpp>
+#include <nn/mse.hpp>
+#include <nn/optim/sgd.hpp>
 
 #include <iostream>
 #include <numeric>
