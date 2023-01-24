@@ -12,7 +12,7 @@ class Linear : public Module {
 
   std::vector<Variable<double>> forward(const std::vector<Variable<double>>& inputs) override;
 
-  std::string save(std::string model_name) override;
+  std::string save(const std::string& model_name) override;
 
  private:
   std::size_t num_in;

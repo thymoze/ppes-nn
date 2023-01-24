@@ -20,7 +20,7 @@ class Module {
     }
   }
 
-  virtual std::string save(std::string model_name) = 0;
+  virtual std::string save(const std::string& model_name) = 0;
 
  protected:
   std::vector<Variable<double>> _params;

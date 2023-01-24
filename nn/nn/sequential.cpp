@@ -15,7 +15,7 @@ std::vector<Variable<double>> Sequential::forward(const std::vector<Variable<dou
   return {out};
 }
 
-std::string Sequential::save(std::string model_name) {
+std::string Sequential::save(const std::string& model_name) {
   std::string code =
       "#pragma once\n\n"
       "#include <nn/modules/linear.hpp>\n"
