@@ -51,18 +51,18 @@ std::vector<Variable<double>> Linear::forward(const std::vector<Variable<double>
 std::string Linear::save(std::string model_name) {
   auto weights = _params[0];
   auto bias_weights = _params[1];
-  std::string code = std::string("nn::Linear(Matrix<double>{") + std::to_string(weights.rows()) + std::string(", ") + std::to_string(weights.cols()) + std::string(", {");
-  for (auto val : weights.value())
-  {
+  std::string code = std::string("nn::Linear(Matrix<double>{") + std::to_string(weights.rows()) +
+                     std::string(", ") + std::to_string(weights.cols()) + std::string(", {");
+  for (auto val : weights.value()) {
     code += std::to_string(val) + ", ";
   }
   code.pop_back();
   code.pop_back();
 
-  code += "}}, Matrix<double>{" + std::to_string(bias_weights.rows()) + std::string(", ") + std::to_string(bias_weights.cols()) + std::string(", {");
+  code += "}}, Matrix<double>{" + std::to_string(bias_weights.rows()) + std::string(", ") +
+          std::to_string(bias_weights.cols()) + std::string(", {");
 
-  for (auto val : bias_weights.value())
-  {
+  for (auto val : bias_weights.value()) {
     code += std::to_string(val) + ", ";
   }
   code.pop_back();
