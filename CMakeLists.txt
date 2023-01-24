@@ -4,7 +4,7 @@ if(BUILD_PICO)
   include(pico-sdk/pico_sdk_init.cmake)
 endif()
 
-project(ppes_nn)
+project(ppes_nn C CXX ASM)
 include(CTest)
 
 set(CMAKE_CXX_STANDARD 20)

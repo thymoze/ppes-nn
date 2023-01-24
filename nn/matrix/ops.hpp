@@ -77,7 +77,7 @@ namespace m {
 
 template <typename T>
 Matrix<T> sum(const Matrix<T>& mat) {
-  T val = std::reduce(mat.cbegin(), mat.cend(), 0.0);
+  T val = std::accumulate(mat.cbegin(), mat.cend(), 0.0);
 
   return Matrix<T>(1, 1, {val});
 }
@@ -85,7 +85,7 @@ Matrix<T> sum(const Matrix<T>& mat) {
 template <typename T>
 Matrix<T> mean(const Matrix<T>& mat) {
   T count = static_cast<T>(mat.rows() * mat.cols());
-  T val = std::reduce(mat.cbegin(), mat.cend(), 0.0) / count;
+  T val = std::accumulate(mat.cbegin(), mat.cend(), 0.0) / count;
 
   return Matrix<T>(1, 1, {val});
 }

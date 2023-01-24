@@ -89,9 +89,11 @@ class Variable {
 
   std::pair<std::size_t, std::size_t> size() const { return value().size(); }
 
-  Matrix<T>::ref operator()(size_t i, size_t j) { return value().operator()(i, j); }
+  typename Matrix<T>::ref operator()(size_t i, size_t j) { return value().operator()(i, j); }
 
-  Matrix<T>::const_ref operator()(size_t i, size_t j) const { return value().operator()(i, j); }
+  typename Matrix<T>::const_ref operator()(size_t i, size_t j) const {
+    return value().operator()(i, j);
+  }
 
   Variable<T> transpose() const {
     return Variable(value().transpose(), shared_grad->inputs, shared_grad->gradFunc);
