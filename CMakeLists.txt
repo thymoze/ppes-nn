@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 
 if(BUILD_PICO)
-  include(pico-sdk/pico_sdk_init.cmake)
+  set(BUILD_TESTING false)
+  include(cmake/pico_sdk.cmake)
 endif()
 
 project(ppes_nn C CXX ASM)
