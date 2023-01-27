@@ -3,6 +3,10 @@
 #include <autograd/autograd.hpp>
 #include <matrix/matrix.hpp>
 
+namespace nn {
+
 Variable<double> mse(Variable<double> pred, Variable<double> target) {
-  return ag::mean((target - pred) * (target - pred));
+  return mean((target - pred) * (target - pred));
 }
+
+}  // namespace nn

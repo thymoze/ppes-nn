@@ -11,19 +11,21 @@
 #include <string>
 #include <utility>
 
+using var = nn::Variable<double>;
+
 int main() {
-  std::vector<std::pair<Variable<double>, Variable<double>>> xor_data = {
-      {Variable<double>(Matrix<double>{1, 2, {0, 0}}), Variable<double>(Matrix<double>{1, 1, {0}})},
-      {Variable<double>(Matrix<double>{1, 2, {1, 1}}), Variable<double>(Matrix<double>{1, 1, {0}})},
-      {Variable<double>(Matrix<double>{1, 2, {1, 0}}), Variable<double>(Matrix<double>{1, 1, {1}})},
-      {Variable<double>(Matrix<double>{1, 2, {0, 1}}), Variable<double>(Matrix<double>{1, 1, {1}})},
+  std::vector<std::pair<var, var>> xor_data = {
+      {var(nn::Matrix<double>{1, 2, {0, 0}}), var(nn::Matrix<double>{1, 1, {0}})},
+      {var(nn::Matrix<double>{1, 2, {1, 1}}), var(nn::Matrix<double>{1, 1, {0}})},
+      {var(nn::Matrix<double>{1, 2, {1, 0}}), var(nn::Matrix<double>{1, 1, {1}})},
+      {var(nn::Matrix<double>{1, 2, {0, 1}}), var(nn::Matrix<double>{1, 1, {1}})},
   };
 
-  std::vector<std::pair<Variable<double>, Variable<double>>> and_data = {
-      {Variable<double>(Matrix<double>{1, 2, {0, 0}}), Variable<double>(Matrix<double>{1, 1, {0}})},
-      {Variable<double>(Matrix<double>{1, 2, {1, 1}}), Variable<double>(Matrix<double>{1, 1, {1}})},
-      {Variable<double>(Matrix<double>{1, 2, {1, 0}}), Variable<double>(Matrix<double>{1, 1, {0}})},
-      {Variable<double>(Matrix<double>{1, 2, {0, 1}}), Variable<double>(Matrix<double>{1, 1, {0}})},
+  std::vector<std::pair<var, var>> and_data = {
+      {var(nn::Matrix<double>{1, 2, {0, 0}}), var(nn::Matrix<double>{1, 1, {0}})},
+      {var(nn::Matrix<double>{1, 2, {1, 1}}), var(nn::Matrix<double>{1, 1, {1}})},
+      {var(nn::Matrix<double>{1, 2, {1, 0}}), var(nn::Matrix<double>{1, 1, {0}})},
+      {var(nn::Matrix<double>{1, 2, {0, 1}}), var(nn::Matrix<double>{1, 1, {0}})},
   };
 
   auto model = nn::Sequential();
@@ -31,14 +33,14 @@ int main() {
   model.add(nn::Sigmoid());
   model.add(nn::Linear(3, 1));
 
-  auto optimizer = SGD(model.params(), 0.1);
+  auto optimizer = nn::SGD(model.params(), 0.1);
 
   for (int epoch = 0; epoch < 1000; epoch++) {
     double epoch_loss = 0;
     for (auto &[input, target] : xor_data) {
       auto output = model({input})[0];
 
-      auto loss = mse(output, target);
+      auto loss = nn::mse(output, target);
 
       optimizer.zero_grad();
       loss.backward();

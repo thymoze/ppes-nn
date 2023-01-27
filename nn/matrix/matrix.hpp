@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+namespace nn {
+
 template <typename T>
 class Matrix {
  public:
@@ -28,9 +30,9 @@ class Matrix {
 
   Matrix(std::initializer_list<std::initializer_list<T>> init)
       : rows_(init.size()), cols_(std::empty(init) ? 0 : (*init.begin()).size()) {
-    assert(("All rows must be the same length!",
-            std::adjacent_find(init.begin(), init.end(),
-                               [](auto l, auto r) { return l.size() != r.size(); }) == init.end()));
+    assert(std::adjacent_find(init.begin(), init.end(),
+                              [](auto l, auto r) { return l.size() != r.size(); }) == init.end() &&
+           "All rows must be the same length!");
     data_.reserve(rows_ * cols_);
     std::for_each(init.begin(), init.end(), [this](auto list) { data_.insert(data_.end(), list); });
   }
@@ -94,5 +96,7 @@ class Matrix {
 
   std::vector<T> data_;
 };
+
+}  // namespace nn
 
 #include <matrix/ops.hpp>

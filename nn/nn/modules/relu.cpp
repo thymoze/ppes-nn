@@ -6,7 +6,7 @@
 namespace nn {
 
 std::vector<Variable<double>> ReLU::forward(const std::vector<Variable<double>>& inputs) {
-  auto x = ag::max(inputs[0], 0.);
+  auto x = max(inputs[0], 0.);
 
   return {x};
 }

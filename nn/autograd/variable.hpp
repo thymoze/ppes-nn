@@ -6,6 +6,8 @@
 #include <unordered_set>
 #include <vector>
 
+namespace nn {
+
 /// A container around data to facilitate reverse-mode automatic differentiation
 template <typename T>
 class Variable {
@@ -99,3 +101,5 @@ class Variable {
     return Variable(value().transpose(), shared_grad_->inputs, shared_grad_->gradFunc);
   }
 };
+
+}

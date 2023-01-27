@@ -4,6 +4,8 @@
 #include <autograd/autograd.hpp>
 #include <vector>
 
+namespace nn {
+
 class SGD {
  public:
   SGD(const std::vector<Variable<double>>& parameters, double learning_rate = 0.01)
@@ -28,3 +30,5 @@ class SGD {
   std::vector<Variable<double>> _params;
   double _learning_rate = 0;
 };
+
+}  // namespace nn

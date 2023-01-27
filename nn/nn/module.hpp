@@ -4,6 +4,8 @@
 
 #include "autograd/variable.hpp"
 
+namespace nn {
+
 class Module {
  public:
   virtual ~Module() = default;
@@ -29,3 +31,5 @@ class Module {
 
   Module() = default;
 };
+
+}

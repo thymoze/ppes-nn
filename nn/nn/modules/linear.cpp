@@ -42,7 +42,7 @@ std::vector<Variable<double>> Linear::forward(const std::vector<Variable<double>
   auto weights = params_[0];
   auto bias = params_[1];
 
-  auto x = ag::matmul(inputs[0], weights);
+  auto x = matmul(inputs[0], weights);
   x = x + bias;
 
   return {x};
@@ -51,15 +51,16 @@ std::vector<Variable<double>> Linear::forward(const std::vector<Variable<double>
 std::string Linear::save(const std::string& model_name) {
   auto weights = params_[0];
   auto bias_weights = params_[1];
-  std::string code = std::string("nn::Linear(Matrix<double>{") + std::to_string(weights.rows()) +
-                     std::string(", ") + std::to_string(weights.cols()) + std::string(", {");
+  std::string code = std::string("nn::Linear(nn::Matrix<double>{") +
+                     std::to_string(weights.rows()) + std::string(", ") +
+                     std::to_string(weights.cols()) + std::string(", {");
   for (auto val : weights.value()) {
     code += std::to_string(val) + ", ";
   }
   code.pop_back();
   code.pop_back();
 
-  code += "}}, Matrix<double>{" + std::to_string(bias_weights.rows()) + std::string(", ") +
+  code += "}}, nn::Matrix<double>{" + std::to_string(bias_weights.rows()) + std::string(", ") +
           std::to_string(bias_weights.cols()) + std::string(", {");
 
   for (auto val : bias_weights.value()) {

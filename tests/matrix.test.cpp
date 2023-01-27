@@ -3,6 +3,8 @@
 #include <matrix/matrix.hpp>
 #include <vector>
 
+using namespace nn;
+
 TEST_CASE("Initialize Matrix of requested size") {
   auto m = Matrix<int>(5, 3);
 

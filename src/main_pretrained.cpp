@@ -16,7 +16,7 @@ int main(void) {
     std::getline(std::cin, input);
     double second = std::stoi(input);
 
-    auto in = Variable<double>(Matrix<double>{1, 2, {first, second}});
+    auto in = nn::Variable<double>(nn::Matrix<double>{1, 2, {first, second}});
     auto out = model({in})[0];
 
     std::cout << "Output: " << out(0, 0) << std::endl;

@@ -4,6 +4,8 @@
 #include <matrix/matrix.hpp>
 #include <numeric>
 
+namespace nn {
+
 template <typename T>
 Matrix<T> operator+(const Matrix<T>& lhs, const Matrix<T>& rhs) {
   assert(lhs.size() == rhs.size() && "Addition requires matrices to be the same size!");
@@ -69,12 +71,6 @@ Matrix<T> operator/(const Matrix<T>& lhs, const Matrix<T>& rhs) {
   return result;
 }
 
-//
-// ------------------------------
-//
-
-namespace m {
-
 template <typename T>
 Matrix<T> sum(const Matrix<T>& mat) {
   T val = std::accumulate(mat.cbegin(), mat.cend(), 0.0);
@@ -107,4 +103,4 @@ Matrix<T> exp(const Matrix<T>& mat) {
   return result;
 }
 
-}  // namespace m
+}  // namespace nn
