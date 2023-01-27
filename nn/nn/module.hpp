@@ -10,14 +10,14 @@ class Module {
 
   virtual std::vector<Variable<double>> forward(const std::vector<Variable<double>>& inputs) = 0;
 
-  std::vector<Variable<double>>& params() { return _params; }
+  std::vector<Variable<double>>& params() { return params_; }
 
   std::vector<Variable<double>> operator()(const std::vector<Variable<double>>& inputs) {
     return forward(inputs);
   }
 
   void zero_grad() {
-    for (auto& param : _params) {
+    for (auto& param : params_) {
       param.zero_grad();
     }
   }
@@ -25,7 +25,7 @@ class Module {
   virtual std::string save(const std::string& model_name) = 0;
 
  protected:
-  std::vector<Variable<double>> _params;
+  std::vector<Variable<double>> params_;
 
   Module() = default;
 };

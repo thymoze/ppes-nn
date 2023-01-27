@@ -16,8 +16,8 @@ class Sequential : public Module {
 
   template <typename M>
   void add(std::shared_ptr<M> module) {
-    _modules.emplace_back(module);
-    _params.insert(_params.end(), module->params().begin(), module->params().end());
+    modules_.emplace_back(module);
+    params_.insert(params_.end(), module->params().begin(), module->params().end());
   }
 
   std::vector<Variable<double>> forward(const std::vector<Variable<double>>& inputs) override;
@@ -25,7 +25,7 @@ class Sequential : public Module {
   std::string save(const std::string& model_name) override;
 
  private:
-  std::vector<std::shared_ptr<Module>> _modules;
+  std::vector<std::shared_ptr<Module>> modules_;
 };
 
 }  // namespace nn

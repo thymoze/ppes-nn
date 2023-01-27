@@ -8,39 +8,39 @@
 namespace nn {
 
 Linear::Linear(std::size_t input_size, std::size_t output_size, bool bias /* = true */)
-    : num_in(input_size), num_out(output_size), bias(bias) {
+    : num_in_(input_size), num_out_(output_size), bias_(bias) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_real_distribution<> dis(-1.0, 1.0);
 
-  auto weights = Variable<double>(Matrix<double>(num_in, num_out));
+  auto weights = Variable<double>(Matrix<double>(num_in_, num_out_));
   std::generate(weights.value().begin(), weights.value().end(), [&dis, &gen] { return dis(gen); });
 
   if (bias) {
-    auto bias_weights = Variable<double>(Matrix<double>(1, num_out));
+    auto bias_weights = Variable<double>(Matrix<double>(1, num_out_));
     std::generate(bias_weights.value().begin(), bias_weights.value().end(),
                   [&dis, &gen] { return dis(gen); });
-    _params = {weights, bias_weights};
+    params_ = {weights, bias_weights};
   } else {
-    _params = {weights};
+    params_ = {weights};
   }
 }
 
 Linear::Linear(Variable<double> weights, Variable<double> bias_weights)
-    : num_in(weights.rows()), num_out(weights.cols()), bias(true) {
-  _params = {weights, bias_weights};
+    : num_in_(weights.rows()), num_out_(weights.cols()), bias_(true) {
+  params_ = {weights, bias_weights};
 }
 
 Linear::Linear(Variable<double> weights)
-    : num_in(weights.rows()), num_out(weights.cols()), bias(false) {
-  _params = {weights};
+    : num_in_(weights.rows()), num_out_(weights.cols()), bias_(false) {
+  params_ = {weights};
 }
 
 std::vector<Variable<double>> Linear::forward(const std::vector<Variable<double>>& inputs) {
   assert(inputs.size() == 1);
 
-  auto weights = _params[0];
-  auto bias = _params[1];
+  auto weights = params_[0];
+  auto bias = params_[1];
 
   auto x = ag::matmul(inputs[0], weights);
   x = x + bias;
@@ -49,8 +49,8 @@ std::vector<Variable<double>> Linear::forward(const std::vector<Variable<double>
 }
 
 std::string Linear::save(const std::string& model_name) {
-  auto weights = _params[0];
-  auto bias_weights = _params[1];
+  auto weights = params_[0];
+  auto bias_weights = params_[1];
   std::string code = std::string("nn::Linear(Matrix<double>{") + std::to_string(weights.rows()) +
                      std::string(", ") + std::to_string(weights.cols()) + std::string(", {");
   for (auto val : weights.value()) {

@@ -14,12 +14,12 @@ class Variable {
 
   Variable() = default;
 
-  Variable(Matrix<T> value) : shared_value(std::make_shared<Matrix<T>>(std::move(value))) {}
+  Variable(Matrix<T> value) : shared_value_(std::make_shared<Matrix<T>>(std::move(value))) {}
 
   Variable(Matrix<T> value, std::vector<Variable> inputs, GradFunc gradFunc)
-      : shared_value(std::make_shared<Matrix<T>>(std::move(value))) {
-    shared_grad->inputs = std::move(inputs);
-    shared_grad->gradFunc = std::move(gradFunc);
+      : shared_value_(std::make_shared<Matrix<T>>(std::move(value))) {
+    shared_grad_->inputs = std::move(inputs);
+    shared_grad_->gradFunc = std::move(gradFunc);
   }
 
   void backward() const {
@@ -27,26 +27,26 @@ class Variable {
 
     auto dag = build();
     for (auto iter = dag.rbegin(); iter != dag.rend(); iter++) {
-      if (iter->shared_grad->gradFunc) {
-        iter->shared_grad->gradFunc(iter->shared_grad->inputs, *iter->shared_grad->grad);
+      if (iter->shared_grad_->gradFunc) {
+        iter->shared_grad_->gradFunc(iter->shared_grad_->inputs, *iter->shared_grad_->grad);
       }
     }
   }
 
   void add_grad(const Variable<T>& grad) const {
-    if (shared_grad->grad) {
-      shared_grad->grad =
-          std::make_unique<Variable<T>>(Variable(shared_grad->grad->value() + grad.value()));
+    if (shared_grad_->grad) {
+      shared_grad_->grad =
+          std::make_unique<Variable<T>>(Variable(shared_grad_->grad->value() + grad.value()));
     } else {
-      shared_grad->grad = std::make_unique<Variable<T>>(grad);
+      shared_grad_->grad = std::make_unique<Variable<T>>(grad);
     }
   }
 
-  void zero_grad() const { shared_grad->grad.reset(); }
+  void zero_grad() const { shared_grad_->grad.reset(); }
 
-  Variable<T>& grad() const { return *shared_grad->grad; }
+  Variable<T>& grad() const { return *shared_grad_->grad; }
 
-  Matrix<T>& value() const { return *shared_value; }
+  Matrix<T>& value() const { return *shared_value_; }
 
  private:
   std::vector<Variable> build() const {
@@ -56,11 +56,11 @@ class Variable {
 
     // Topological sort
     recurse = [&](const Variable& var) {
-      auto id = var.shared_grad.get();
+      auto id = var.shared_grad_.get();
       if (cache.find(id) != cache.end()) {
         return;
       }
-      for (const auto& input : var.shared_grad->inputs) {
+      for (const auto& input : var.shared_grad_->inputs) {
         recurse(input);
       }
       cache.insert(id);
@@ -77,8 +77,8 @@ class Variable {
     GradFunc gradFunc{nullptr};
   };
 
-  std::shared_ptr<SharedGrad> shared_grad = std::make_shared<SharedGrad>();
-  std::shared_ptr<Matrix<T>> shared_value = std::make_shared<Matrix<T>>();
+  std::shared_ptr<SharedGrad> shared_grad_ = std::make_shared<SharedGrad>();
+  std::shared_ptr<Matrix<T>> shared_value_ = std::make_shared<Matrix<T>>();
 
  public:
   // Functions passed through to Matrix
@@ -96,6 +96,6 @@ class Variable {
   }
 
   Variable<T> transpose() const {
-    return Variable(value().transpose(), shared_grad->inputs, shared_grad->gradFunc);
+    return Variable(value().transpose(), shared_grad_->inputs, shared_grad_->gradFunc);
   }
 };

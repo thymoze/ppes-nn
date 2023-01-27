@@ -7,7 +7,7 @@ namespace nn {
 
 std::vector<Variable<double>> Sequential::forward(const std::vector<Variable<double>>& inputs) {
   auto out = inputs;
-  for (auto& module : _modules) {
+  for (auto& module : modules_) {
     out = module->forward(out);
   }
   return {out};
@@ -28,7 +28,7 @@ std::string Sequential::save(const std::string& model_name) {
       " {\n"
       "   auto model = nn::Sequential();\n";
 
-  for (auto& m : _modules) {
+  for (auto& m : modules_) {
     code += "   model.add(" + m->save(model_name) + ");\n";
   }
   code +=

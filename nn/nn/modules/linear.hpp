@@ -17,9 +17,9 @@ class Linear : public Module {
  private:
   Linear() = default;
 
-  std::size_t num_in;
-  std::size_t num_out;
-  bool bias;
+  std::size_t num_in_;
+  std::size_t num_out_;
+  bool bias_;
 };
 
 }  // namespace nn

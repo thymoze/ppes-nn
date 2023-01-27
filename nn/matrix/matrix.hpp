@@ -16,40 +16,40 @@ class Matrix {
   Matrix() = default;
 
   Matrix(std::size_t rows, std::size_t cols)
-      : _rows(rows), _cols(cols), _data(std::vector<T>(_rows * _cols)) {}
+      : rows_(rows), cols_(cols), data_(std::vector<T>(rows_ * cols_)) {}
 
   Matrix(std::size_t rows, std::size_t cols, T value)
-      : _rows(rows), _cols(cols), _data(std::vector<T>(_rows * _cols, value)) {}
+      : rows_(rows), cols_(cols), data_(std::vector<T>(rows_ * cols_, value)) {}
 
   Matrix(size_t rows, size_t cols, std::initializer_list<T> init)
-      : _rows(rows), _cols(cols), _data(std::vector<T>(init)) {
-    assert(_rows * _cols == _data.size());
+      : rows_(rows), cols_(cols), data_(std::vector<T>(init)) {
+    assert(rows_ * cols_ == data_.size());
   }
 
   Matrix(std::initializer_list<std::initializer_list<T>> init)
-      : _rows(init.size()), _cols(std::empty(init) ? 0 : (*init.begin()).size()) {
+      : rows_(init.size()), cols_(std::empty(init) ? 0 : (*init.begin()).size()) {
     assert(("All rows must be the same length!",
             std::adjacent_find(init.begin(), init.end(),
                                [](auto l, auto r) { return l.size() != r.size(); }) == init.end()));
-    _data.reserve(_rows * _cols);
-    std::for_each(init.begin(), init.end(), [this](auto list) { _data.insert(_data.end(), list); });
+    data_.reserve(rows_ * cols_);
+    std::for_each(init.begin(), init.end(), [this](auto list) { data_.insert(data_.end(), list); });
   }
 
   template <typename It>
   Matrix(size_t rows, size_t cols, It first, It last)
-      : _rows(rows), _cols(cols), _data(std::vector<T>(first, last)) {}
+      : rows_(rows), cols_(cols), data_(std::vector<T>(first, last)) {}
 
-  std::size_t rows() const { return _rows; }
+  std::size_t rows() const { return rows_; }
 
-  std::size_t cols() const { return _cols; }
+  std::size_t cols() const { return cols_; }
 
-  std::pair<std::size_t, std::size_t> size() const { return std::make_pair(_rows, _cols); }
+  std::pair<std::size_t, std::size_t> size() const { return std::make_pair(rows_, cols_); }
 
   ref operator()(size_t i, size_t j) {
     return const_cast<ref>(std::as_const(*this).operator()(i, j));
   }
 
-  const_ref operator()(size_t i, size_t j) const { return _data[i * _cols + j]; }
+  const_ref operator()(size_t i, size_t j) const { return data_[i * cols_ + j]; }
 
   Matrix<T> matmul(const Matrix<T>& rhs) const {
     assert(this->cols() == rhs.rows() &&
@@ -78,21 +78,21 @@ class Matrix {
     return result;
   }
 
-  std::vector<T>& data() { return _data; }
+  std::vector<T>& data() { return data_; }
 
-  auto begin() { return _data.begin(); }
-  auto cbegin() const { return _data.cbegin(); }
-  auto end() { return _data.end(); }
-  auto cend() const { return _data.cend(); }
-  auto rbegin() { return _data.rbegin(); }
-  auto crbegin() const { return _data.crbegin(); }
-  auto rend() { return _data.rend(); }
-  auto crend() const { return _data.crend(); }
+  auto begin() { return data_.begin(); }
+  auto cbegin() const { return data_.cbegin(); }
+  auto end() { return data_.end(); }
+  auto cend() const { return data_.cend(); }
+  auto rbegin() { return data_.rbegin(); }
+  auto crbegin() const { return data_.crbegin(); }
+  auto rend() { return data_.rend(); }
+  auto crend() const { return data_.crend(); }
 
  private:
-  size_t _rows, _cols;
+  size_t rows_, cols_;
 
-  std::vector<T> _data;
+  std::vector<T> data_;
 };
 
 #include <matrix/ops.hpp>
