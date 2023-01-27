@@ -32,4 +32,4 @@ class Module {
   Module() = default;
 };
 
-}
+}  // namespace nn

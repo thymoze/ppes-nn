@@ -102,4 +102,4 @@ class Variable {
   }
 };
 
-}
+}  // namespace nn
