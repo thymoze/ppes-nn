@@ -6,6 +6,8 @@
 
 class Module {
  public:
+  virtual ~Module() = default;
+
   virtual std::vector<Variable<double>> forward(const std::vector<Variable<double>>& inputs) = 0;
 
   std::vector<Variable<double>>& params() { return _params; }
@@ -25,5 +27,5 @@ class Module {
  protected:
   std::vector<Variable<double>> _params;
 
-  // Module();
+  Module() = default;
 };

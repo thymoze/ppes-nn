@@ -7,7 +7,7 @@ namespace nn {
 
 class Sigmoid : public Module {
  public:
-  Sigmoid();
+  Sigmoid() = default;
 
   std::vector<Variable<double>> forward(const std::vector<Variable<double>>& inputs) override;
 

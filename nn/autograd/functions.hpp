@@ -61,8 +61,8 @@ Variable<T> max(const Variable<T>& var, T value) {
   auto gradFunc = [value](const std::vector<Variable<T>>& inputs, const Variable<T>& grad) {
     auto g = Matrix<T>(inputs[0].rows(), inputs[0].cols());
 
-    for (int i = 0; i < inputs[0].rows(); i++) {
-      for (int j = 0; j < inputs[0].cols(); j++) {
+    for (std::size_t i = 0; i < inputs[0].rows(); i++) {
+      for (std::size_t j = 0; j < inputs[0].cols(); j++) {
         if (inputs[0](i, j) >= value) {
           g(i, j) = grad(i, j);
         } else {

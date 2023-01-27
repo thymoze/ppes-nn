@@ -6,7 +6,7 @@ namespace nn {
 
 class ReLU : public Module {
  public:
-  ReLU();
+  ReLU() = default;
 
   std::vector<Variable<double>> forward(const std::vector<Variable<double>>& inputs) override;
 

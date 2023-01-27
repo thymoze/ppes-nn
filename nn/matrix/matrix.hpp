@@ -52,14 +52,14 @@ class Matrix {
   const_ref operator()(size_t i, size_t j) const { return _data[i * _cols + j]; }
 
   Matrix<T> matmul(const Matrix<T>& rhs) const {
-    assert(
-        ("Dimension must match for matrix multiplication (MxN)*(NxK)", this->cols() == rhs.rows()));
+    assert(this->cols() == rhs.rows() &&
+           "Dimension must match for matrix multiplication (MxN)*(NxK)");
 
     Matrix<T> result(this->rows(), rhs.cols());
-    for (int i = 0; i < result.rows(); i++) {
-      for (int j = 0; j < result.cols(); j++) {
+    for (std::size_t i = 0; i < result.rows(); i++) {
+      for (std::size_t j = 0; j < result.cols(); j++) {
         T val = 0;
-        for (int k = 0; k < this->cols(); k++) {
+        for (std::size_t k = 0; k < this->cols(); k++) {
           val = val + this->operator()(i, k) * rhs(k, j);
         }
         result(i, j) = val;
@@ -70,8 +70,8 @@ class Matrix {
 
   Matrix<T> transpose() const {
     Matrix<T> result(cols(), rows());
-    for (int i = 0; i < result.rows(); i++) {
-      for (int j = 0; j < result.cols(); j++) {
+    for (std::size_t i = 0; i < result.rows(); i++) {
+      for (std::size_t j = 0; j < result.cols(); j++) {
         result(i, j) = this->operator()(j, i);
       }
     }

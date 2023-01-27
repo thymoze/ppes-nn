@@ -6,7 +6,7 @@
 
 template <typename T>
 Matrix<T> operator+(const Matrix<T>& lhs, const Matrix<T>& rhs) {
-  assert(("Addition requires matrices to be the same size!", lhs.size() == rhs.size()));
+  assert(lhs.size() == rhs.size() && "Addition requires matrices to be the same size!");
 
   Matrix<T> result(lhs.rows(), lhs.cols());
   std::transform(lhs.cbegin(), lhs.cend(), rhs.cbegin(), result.begin(), std::plus<T>());
@@ -15,7 +15,7 @@ Matrix<T> operator+(const Matrix<T>& lhs, const Matrix<T>& rhs) {
 
 template <typename T>
 Matrix<T> operator-(const Matrix<T>& lhs, const Matrix<T>& rhs) {
-  assert(("Subtraction requires matrices to be the same size!", lhs.size() == rhs.size()));
+  assert(lhs.size() == rhs.size() && "Subtraction requires matrices to be the same size!");
 
   Matrix<T> result(lhs.rows(), lhs.cols());
   std::transform(lhs.cbegin(), lhs.cend(), rhs.cbegin(), result.begin(), std::minus<T>());
@@ -37,7 +37,7 @@ Matrix<T> operator*(double scalar, const Matrix<T>& rhs) {
 
 template <typename T>
 Matrix<T> operator*(const Matrix<T>& lhs, const Matrix<T>& rhs) {
-  assert(("Addition requires matrices to be the same size!", lhs.size() == rhs.size()));
+  assert(lhs.size() == rhs.size() && "Multiplication requires matrices to be the same size!");
 
   Matrix<T> result(lhs.rows(), lhs.cols());
   std::transform(lhs.cbegin(), lhs.cend(), rhs.cbegin(), result.begin(), std::multiplies<T>());
@@ -62,7 +62,7 @@ Matrix<T> operator/(double scalar, const Matrix<T>& rhs) {
 
 template <typename T>
 Matrix<T> operator/(const Matrix<T>& lhs, const Matrix<T>& rhs) {
-  assert(("Division requires matrices to be the same size!", lhs.size() == rhs.size()));
+  assert(lhs.size() == rhs.size() && "Division requires matrices to be the same size!");
 
   Matrix<T> result(lhs.rows(), lhs.cols());
   std::transform(lhs.cbegin(), lhs.cend(), rhs.cbegin(), result.begin(), std::divides<T>());

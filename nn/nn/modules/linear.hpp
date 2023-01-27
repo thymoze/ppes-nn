@@ -15,6 +15,8 @@ class Linear : public Module {
   std::string save(const std::string& model_name) override;
 
  private:
+  Linear() = default;
+
   std::size_t num_in;
   std::size_t num_out;
   bool bias;

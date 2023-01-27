@@ -7,7 +7,7 @@ namespace nn {
 
 class Sequential : public Module {
  public:
-  Sequential();
+  Sequential() = default;
 
   template <typename M>
   void add(const M& module) {
