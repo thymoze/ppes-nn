@@ -11,7 +11,8 @@ Linear::Linear(std::size_t input_size, std::size_t output_size, bool bias /* = t
     : num_in_(input_size), num_out_(output_size), bias_(bias) {
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_real_distribution<> dis(-1.0, 1.0);
+  auto bound = 1 / std::sqrt(input_size);
+  std::uniform_real_distribution<> dis(-bound, bound);
 
   auto weights = Variable<double>(Matrix<double>(num_in_, num_out_));
   std::generate(weights.value().begin(), weights.value().end(), [&dis, &gen] { return dis(gen); });
