@@ -28,6 +28,11 @@ class Matrix {
     assert(rows_ * cols_ == data_.size());
   }
 
+  Matrix(size_t rows, size_t cols, std::vector<T>&& init)
+      : rows_(rows), cols_(cols), data_(std::move(init)) {
+    assert(rows_ * cols_ == data_.size());
+  }
+
   Matrix(std::initializer_list<std::initializer_list<T>> init)
       : rows_(init.size()), cols_(std::empty(init) ? 0 : (*init.begin()).size()) {
     assert(std::adjacent_find(init.begin(), init.end(),
@@ -78,6 +83,12 @@ class Matrix {
       }
     }
     return result;
+  }
+
+  void reshape(std::size_t rows, std::size_t cols) {
+    assert(rows * cols == rows_ * cols_ && "Reshape cannot change element count");
+    rows_ = rows;
+    cols_ = cols;
   }
 
   std::vector<T>& data() { return data_; }

@@ -10,6 +10,9 @@ add_library(nn
   nn/modules/relu.cpp
   nn/optim/sgd.hpp
   nn/mse.hpp
+  nn/dataset/dataset.hpp
+  nn/dataset/mnist_dataset.hpp
+  nn/dataset/mnist_dataset.cpp
 
   matrix/matrix.hpp
   matrix/ops.hpp

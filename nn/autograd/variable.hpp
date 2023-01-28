@@ -98,6 +98,7 @@ class Variable {
   }
 
   Variable<T> transpose() const {
+    // TODO: Missing grad_func for transpose
     return Variable(value().transpose(), shared_grad_->inputs, shared_grad_->gradFunc);
   }
 };
