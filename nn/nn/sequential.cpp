@@ -43,6 +43,6 @@ std::string Sequential::save(const std::string& model_name) {
   dest_file.close();
   std::cout << "saved to " << dest << std::endl;
   return code;
-};
+}
 
 }  // namespace nn

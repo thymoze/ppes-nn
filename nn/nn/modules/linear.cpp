@@ -49,7 +49,7 @@ std::vector<Variable<double>> Linear::forward(const std::vector<Variable<double>
   return {x};
 }
 
-std::string Linear::save(const std::string& model_name) {
+std::string Linear::save(const std::string&) {
   auto weights = params_[0];
   auto bias_weights = params_[1];
   std::string code = std::string("nn::Linear(nn::Matrix<double>{") +

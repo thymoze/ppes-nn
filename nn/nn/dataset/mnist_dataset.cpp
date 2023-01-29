@@ -74,6 +74,6 @@ std::pair<Matrix<double>, Matrix<double>> MnistDataset::get(std::size_t idx) con
   return std::make_pair(images_[idx], labels_[idx]);
 }
 
-std::size_t MnistDataset::size() const { return images_.size(); };
+std::size_t MnistDataset::size() const { return images_.size(); }
 
 }  // namespace nn

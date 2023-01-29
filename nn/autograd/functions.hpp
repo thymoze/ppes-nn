@@ -16,7 +16,7 @@ Variable<T> operator+(const Variable<T>& lhs, const Variable<T>& rhs) {
   };
 
   return Variable<T>(result, {lhs, rhs}, gradFunc);
-};
+}
 
 template <typename T>
 Variable<T> operator-(const Variable<T>& lhs, const Variable<T>& rhs) {
@@ -28,7 +28,7 @@ Variable<T> operator-(const Variable<T>& lhs, const Variable<T>& rhs) {
   };
 
   return Variable<T>(result, {lhs, rhs}, gradFunc);
-};
+}
 
 template <typename T>
 Variable<T> operator*(const Variable<T>& lhs, double scalar) {
