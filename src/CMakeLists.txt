@@ -1,33 +1,20 @@
-add_executable(main 
-    main.cpp)
+function(ADD_COMPILE_LINK_EXECUTABLE EXE_NAME MAIN_FILE)
+  add_executable(${EXE_NAME} ${MAIN_FILE})
+  target_link_libraries(${EXE_NAME} nn)
+  target_compile_options(${EXE_NAME} 
+    PRIVATE 
+      -Wall -Wextra -Wpedantic -std=c++20 -g -Og -fsanitize=address -fsanitize=undefined
+  )
+  target_link_options(${EXE_NAME}
+    PRIVATE
+      -fsanitize=address -fsanitize=undefined
+  )
+endfunction()
 
-add_executable(main_pretrained
-    main_pretrained.cpp)
-
-add_executable(mnist 
-    mnist.cpp)
-
-add_executable(leak
-    leak.cpp)
-
-# target_include_directories(main
-#     PRIVATE
-#         src
-# )
-
-target_link_libraries(main nn)
-target_link_libraries(main_pretrained nn)
-target_link_libraries(mnist nn)
-target_link_libraries(leak nn)
-
-target_compile_options(leak 
-  PRIVATE 
-    -g -fsanitize=address -fsanitize=undefined
-)
-target_link_options(leak
-  PRIVATE
-    -fsanitize=address -fsanitize=undefined
-)
+ADD_COMPILE_LINK_EXECUTABLE(main main.cpp)
+ADD_COMPILE_LINK_EXECUTABLE(main_pretrained main_pretrained.cpp)
+ADD_COMPILE_LINK_EXECUTABLE(mnist mnist.cpp)
+ADD_COMPILE_LINK_EXECUTABLE(leak leak.cpp)
 
 if(BUILD_PICO)
   add_subdirectory(pico)
