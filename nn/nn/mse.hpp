@@ -6,7 +6,8 @@
 namespace nn {
 
 Variable<double> mse(Variable<double> pred, Variable<double> target) {
-  return mean((target - pred) * (target - pred));
+  auto diff = target - pred;
+  return mean(diff * diff);
 }
 
 }  // namespace nn

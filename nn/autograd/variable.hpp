@@ -25,7 +25,7 @@ class Variable {
   }
 
   void backward() {
-    add_grad(Matrix<T>(1, 1, {1}));
+    add_grad(Matrix<T>(rows(), cols(), 1));
 
     dag_ = build();
     for (auto iter = dag_.rbegin(); iter != dag_.rend(); iter++) {
