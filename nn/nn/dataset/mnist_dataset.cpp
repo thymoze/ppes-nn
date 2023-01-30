@@ -10,10 +10,10 @@ namespace nn {
 MnistDataset::MnistDataset(const fs::path& path, Set set) : path_(path), set_(set) {
   std::string type = set == Set::TRAIN ? "train" : "t10k";
 
-  auto images_file_path = path / (type + "-images.idx3-ubyte");
+  auto images_file_path = path / (type + "-images-idx3-ubyte");
   images_ = load_data(images_file_path);
 
-  auto labels_file_path = path / (type + "-labels.idx1-ubyte");
+  auto labels_file_path = path / (type + "-labels-idx1-ubyte");
   labels_ = load_data(labels_file_path);
 
   assert(images_.size() == labels_.size() && "Images and labels need to be the same size.");
