@@ -44,8 +44,8 @@ int main() {
 
       optimizer.zero_grad();
       loss.backward();
-
       optimizer.step();
+      loss.reset_dag();
 
       epoch_loss += loss(0, 0);
     }

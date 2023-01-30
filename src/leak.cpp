@@ -12,6 +12,8 @@ int main() {
   auto res = nn::sum(lhs * rhs);
   res.backward();  // <---
 
+  res.reset_dag();
+
   auto mat1 = Matrix<double>(3, 3, 2);
   auto& mat2 = lhs.value();
 

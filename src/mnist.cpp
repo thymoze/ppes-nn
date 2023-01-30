@@ -33,6 +33,7 @@ int main() {
       loss.backward();
 
       optimizer.step();
+      loss.reset_dag();
 
       epoch_loss += loss(0, 0);
       std::cout << "\33[2K\r" << i << ": " << loss(0, 0) << std::flush;

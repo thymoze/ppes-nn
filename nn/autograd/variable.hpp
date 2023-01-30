@@ -24,15 +24,25 @@ class Variable {
     shared_grad_->gradFunc = std::move(gradFunc);
   }
 
-  void backward() const {
+  void backward() {
     add_grad(Matrix<T>(1, 1, {1}));
 
-    auto dag = build();
-    for (auto iter = dag.rbegin(); iter != dag.rend(); iter++) {
+    dag_ = build();
+    for (auto iter = dag_.rbegin(); iter != dag_.rend(); iter++) {
       if (iter->shared_grad_->gradFunc) {
         iter->shared_grad_->gradFunc(iter->shared_grad_->inputs, *iter->shared_grad_->grad);
       }
     }
+  }
+
+  void reset_dag() {
+    if (dag_.empty()) {
+      return;
+    }
+    for (auto iter = dag_.rbegin(); iter != dag_.rend(); ++iter) {
+      iter->zero_grad();
+    }
+    dag_.clear();
   }
 
   void add_grad(const Variable<T>& grad) const {
@@ -81,6 +91,8 @@ class Variable {
 
   std::shared_ptr<SharedGrad> shared_grad_ = std::make_shared<SharedGrad>();
   std::shared_ptr<Matrix<T>> shared_value_ = std::make_shared<Matrix<T>>();
+
+  std::vector<Variable> dag_ = std::vector<Variable>();
 
  public:
   // Functions passed through to Matrix
