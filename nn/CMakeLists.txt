@@ -1,3 +1,5 @@
+find_package(TBB REQUIRED)
+
 add_library(nn
   nn/module.hpp
   nn/sequential.hpp
@@ -29,5 +31,7 @@ target_link_options(nn
   PRIVATE
     -fsanitize=address -fsanitize=undefined
 )
+
+target_link_libraries(nn PRIVATE TBB::tbb)
 
 set_target_properties(nn PROPERTIES LINKER_LANGUAGE CXX)

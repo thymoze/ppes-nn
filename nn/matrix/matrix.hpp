@@ -2,8 +2,10 @@
 
 #include <algorithm>
 #include <cassert>
+#include <execution>
 #include <initializer_list>
 #include <iostream>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -59,6 +61,27 @@ class Matrix {
   const_ref operator()(size_t i, size_t j) const { return data_[i * cols_ + j]; }
 
   Matrix<T> matmul(const Matrix<T>& rhs) const {
+    assert(this->cols() == rhs.rows() &&
+           "Dimension must match for matrix multiplication (MxN)*(NxK)");
+
+    Matrix<T> result(this->rows(), rhs.cols());
+
+    std::vector<std::size_t> rows = std::vector<std::size_t>(result.rows());
+    std::iota(rows.begin(), rows.end(), 0);
+
+    std::for_each(std::execution::par, rows.begin(), rows.end(), [&](std::size_t i) {
+      for (std::size_t j = 0; j < result.cols(); ++j) {
+        T val = 0;
+        for (std::size_t k = 0; k < this->cols(); ++k) {
+          val += this->operator()(i, k) * rhs(k, j);
+        }
+        result(i, j) = val;
+      }
+    });
+    return result;
+  }
+
+  Matrix<T> matmul_seq(const Matrix<T>& rhs) const {
     assert(this->cols() == rhs.rows() &&
            "Dimension must match for matrix multiplication (MxN)*(NxK)");
 
