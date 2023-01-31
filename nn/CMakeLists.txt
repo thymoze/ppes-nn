@@ -1,18 +1,13 @@
 add_library(nn
   nn/module.hpp
   nn/sequential.hpp
-  nn/sequential.cpp
   nn/modules/linear.hpp
-  nn/modules/linear.cpp
   nn/modules/sigmoid.hpp
-  nn/modules/sigmoid.cpp
   nn/modules/relu.hpp
-  nn/modules/relu.cpp
   nn/optim/sgd.hpp
   nn/mse.hpp
   nn/dataset/dataset.hpp
   nn/dataset/mnist_dataset.hpp
-  nn/dataset/mnist_dataset.cpp
 
   matrix/matrix.hpp
   matrix/ops.hpp
@@ -34,3 +29,5 @@ target_link_options(nn
   PRIVATE
     -fsanitize=address -fsanitize=undefined
 )
+
+set_target_properties(nn PROPERTIES LINKER_LANGUAGE CXX)

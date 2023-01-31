@@ -142,7 +142,7 @@ Variable<T> exp(const Variable<T>& var) {
 
 template <typename T>
 Variable<T> reciprocal(const Variable<T>& denominator) {
-  auto ones = Matrix<double>(denominator.rows(), denominator.cols(), 1);
+  auto ones = Matrix<T>(denominator.rows(), denominator.cols(), 1);
   auto result = ones / denominator.value();
 
   auto gradFunc = [](const std::vector<Variable<T>>& inputs, const Variable<T>& grad) {

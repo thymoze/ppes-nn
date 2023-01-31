@@ -11,27 +11,27 @@
 #include <string>
 #include <utility>
 
-using var = nn::Variable<double>;
+using var = nn::Variable<float>;
 
 int main() {
   std::vector<std::pair<var, var>> xor_data = {
-      {var(nn::Matrix<double>{1, 2, {0, 0}}), var(nn::Matrix<double>{1, 1, {0}})},
-      {var(nn::Matrix<double>{1, 2, {1, 1}}), var(nn::Matrix<double>{1, 1, {0}})},
-      {var(nn::Matrix<double>{1, 2, {1, 0}}), var(nn::Matrix<double>{1, 1, {1}})},
-      {var(nn::Matrix<double>{1, 2, {0, 1}}), var(nn::Matrix<double>{1, 1, {1}})},
+      {var(nn::Matrix<float>{1, 2, {0, 0}}), var(nn::Matrix<float>{1, 1, {0}})},
+      {var(nn::Matrix<float>{1, 2, {1, 1}}), var(nn::Matrix<float>{1, 1, {0}})},
+      {var(nn::Matrix<float>{1, 2, {1, 0}}), var(nn::Matrix<float>{1, 1, {1}})},
+      {var(nn::Matrix<float>{1, 2, {0, 1}}), var(nn::Matrix<float>{1, 1, {1}})},
   };
 
   std::vector<std::pair<var, var>> and_data = {
-      {var(nn::Matrix<double>{1, 2, {0, 0}}), var(nn::Matrix<double>{1, 1, {0}})},
-      {var(nn::Matrix<double>{1, 2, {1, 1}}), var(nn::Matrix<double>{1, 1, {1}})},
-      {var(nn::Matrix<double>{1, 2, {1, 0}}), var(nn::Matrix<double>{1, 1, {0}})},
-      {var(nn::Matrix<double>{1, 2, {0, 1}}), var(nn::Matrix<double>{1, 1, {0}})},
+      {var(nn::Matrix<float>{1, 2, {0, 0}}), var(nn::Matrix<float>{1, 1, {0}})},
+      {var(nn::Matrix<float>{1, 2, {1, 1}}), var(nn::Matrix<float>{1, 1, {1}})},
+      {var(nn::Matrix<float>{1, 2, {1, 0}}), var(nn::Matrix<float>{1, 1, {0}})},
+      {var(nn::Matrix<float>{1, 2, {0, 1}}), var(nn::Matrix<float>{1, 1, {0}})},
   };
 
-  auto model = nn::Sequential();
-  model.add(nn::Linear(2, 3));
-  model.add(nn::Sigmoid());
-  model.add(nn::Linear(3, 1));
+  auto model = nn::Sequential<float>();
+  model.add(nn::Linear<float>(2, 3));
+  model.add(nn::Sigmoid<float>());
+  model.add(nn::Linear<float>(3, 1));
 
   auto optimizer = nn::SGD(model.params(), 0.1);
 

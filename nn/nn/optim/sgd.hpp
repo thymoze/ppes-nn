@@ -6,9 +6,10 @@
 
 namespace nn {
 
+template <typename T>
 class SGD {
  public:
-  SGD(const std::vector<Variable<double>>& parameters, double learning_rate = 0.01)
+  SGD(const std::vector<Variable<T>>& parameters, double learning_rate = 0.01)
       : _params(parameters), _learning_rate(learning_rate) {}
 
   void step() {
@@ -27,7 +28,7 @@ class SGD {
   }
 
  private:
-  std::vector<Variable<double>> _params;
+  std::vector<Variable<T>> _params;
   double _learning_rate = 0;
 };
 

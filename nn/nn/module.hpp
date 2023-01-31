@@ -6,15 +6,16 @@
 
 namespace nn {
 
+template <typename T>
 class Module {
  public:
   virtual ~Module() = default;
 
-  virtual std::vector<Variable<double>> forward(const std::vector<Variable<double>>& inputs) = 0;
+  virtual std::vector<Variable<T>> forward(const std::vector<Variable<T>>& inputs) = 0;
 
-  std::vector<Variable<double>>& params() { return params_; }
+  std::vector<Variable<T>>& params() { return params_; }
 
-  std::vector<Variable<double>> operator()(const std::vector<Variable<double>>& inputs) {
+  std::vector<Variable<T>> operator()(const std::vector<Variable<T>>& inputs) {
     return forward(inputs);
   }
 
@@ -27,7 +28,7 @@ class Module {
   virtual std::string save(const std::string& model_name) = 0;
 
  protected:
-  std::vector<Variable<double>> params_;
+  std::vector<Variable<T>> params_;
 
   Module() = default;
 };

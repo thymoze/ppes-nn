@@ -5,14 +5,14 @@
 #include <nn/modules/sigmoid.hpp>
 #include <nn/sequential.hpp>
 
-class XOR_Model {
+template <typename T>class XOR_Model {
 public:
- static nn::Sequential create()
+ static nn::Sequential<T> create()
  {
-   auto model = nn::Sequential();
-   model.add(nn::Linear(nn::Matrix<double>{2, 3, {0.977387, 2.804045, 2.277690, 2.972495, -3.872589, -0.594189}}, nn::Matrix<double>{1, 3, {-0.271970, -2.090667, -0.413212}}));
-   model.add(nn::Sigmoid());
-   model.add(nn::Linear(nn::Matrix<double>{3, 1, {1.993647, 2.865370, -2.309926}}, nn::Matrix<double>{1, 1, {-0.257632}}));
+   auto model = nn::Sequential<T>();
+   model.add(nn::Linear<T>(nn::Matrix<T>{2, 3, {-3.654480, -0.046590, -1.998234, -4.197844, -2.199390, -0.135481}}, nn::Matrix<T>{1, 3, {0.502311, 0.349054, 0.435185}}));
+   model.add(nn::Sigmoid<T>());
+   model.add(nn::Linear<T>(nn::Matrix<T>{3, 1, {-3.662167, 2.466649, 2.545507}}, nn::Matrix<T>{1, 1, {-0.709472}}));
    return model;
  }
 };
