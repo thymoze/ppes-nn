@@ -25,7 +25,7 @@ target_include_directories(nn
 
 target_compile_options(nn
   PRIVATE
-    -Wall -Wextra -Wpedantic -std=c++20 -g -Og -fsanitize=address -fsanitize=undefined
+    -Wall -Wextra -Wpedantic -std=c++17 -g -Og -fsanitize=address -fsanitize=undefined
 )
 target_link_options(nn
   PRIVATE

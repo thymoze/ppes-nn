@@ -26,13 +26,32 @@ class MnistDataset : public Dataset<Matrix<T>, Matrix<T>> {
     std::string type = set == Set::TRAIN ? "train" : "t10k";
 
     auto images_file_path = path / (type + "-images-idx3-ubyte");
-    images_ = load_data(images_file_path);
+    auto images_file = std::ifstream(images_file_path, std::ios::binary);
+    images_ = load_data(images_file);
 
     auto labels_file_path = path / (type + "-labels-idx1-ubyte");
-    labels_ = load_data(labels_file_path);
+    auto labels_file = std::ifstream(labels_file_path, std::ios::binary);
+    labels_ = load_data(labels_file);
 
     assert(images_.size() == labels_.size() && "Images and labels need to be the same size.");
   };
+
+  struct membuf : std::streambuf {
+    membuf(char* begin, char* end) { this->setg(begin, begin, end); }
+  };
+
+  MnistDataset(std::uint8_t* img_start, std::uint8_t* img_end, std::uint8_t* label_start,
+               std::uint8_t* label_end) {
+    membuf img_buf(reinterpret_cast<char*>(img_start), reinterpret_cast<char*>(img_end));
+    std::istream img_stream(&img_buf);
+    images_ = load_data(img_stream);
+
+    membuf label_buf(reinterpret_cast<char*>(label_start), reinterpret_cast<char*>(label_end));
+    std::istream label_stream(&label_buf);
+    labels_ = load_data(label_stream);
+
+    assert(images_.size() == labels_.size() && "Images and labels need to be the same size.");
+  }
 
   std::pair<Matrix<T>, Matrix<T>> get(std::size_t idx) const override {
     return std::make_pair(images_[idx], labels_[idx]);
@@ -43,9 +62,8 @@ class MnistDataset : public Dataset<Matrix<T>, Matrix<T>> {
  private:
   MnistDataset() = default;
 
-  std::vector<Matrix<T>> load_data(const fs::path& file_path) const {
+  std::vector<Matrix<T>> load_data(std::istream& file) const {
     // https://www.fon.hum.uva.nl/praat/manual/IDX_file_format.html
-    auto file = std::ifstream(file_path, std::ios::binary);
 
     std::uint16_t _magic;
     std::uint8_t data_type;
