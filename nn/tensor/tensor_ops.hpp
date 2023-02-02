@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <tensor/tensor_util.hpp>
 
@@ -17,7 +18,7 @@ Shape broadcast_shapes(const Shape& lhs, const Shape& rhs) {
     if (l == r || l == 1 || r == 1) {
       shape.push_back(std::max(l, r));
     } else {
-      assert("Shapes not broadcastable");
+      throw std::logic_error("Shapes not broadcastable");
     }
   }
   std::reverse(shape.begin(), shape.end());
@@ -41,7 +42,7 @@ class TensorOps {
   using ReduceEl = std::function<T(T, T)>;
   virtual ReduceTensor reduce(ReduceEl fn, T start) = 0;
 
-  virtual Tensor<T> matmul(const Tensor<T>& lhs, const Tensor<T>& rhs) = 0;
+  virtual void matrix_multiply(const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) = 0;
 };
 
 template <typename T>
@@ -87,7 +88,7 @@ class TensorBackend {
 
   void sigmoid_map_out(const Tensor<T>& t, Tensor<T>& out) const {
     ops_->map([](auto x) {
-      // This has better numerical stability
+      // This apparently has better numerical stability
       if (x >= 0) {
         return 1 / (1 + std::exp(-x));
       } else {
@@ -156,6 +157,30 @@ class TensorBackend {
     return out;
   }
 
+  [[nodiscard]] Tensor<T> matrix_multiply(const Tensor<T>& a, const Tensor<T>& b) const {
+    assert(*(a.shape().end() - 1) == *(b.shape().end() - 2) &&
+           "Matrix multiplication dimensions don't match.");
+
+    Tensor<T> lhs = a.ndims() == 2 ? a.reshape({1, a.shape()[0], a.shape()[1]}) : a;
+    Tensor<T> rhs = b.ndims() == 2 ? b.reshape({1, b.shape()[0], b.shape()[1]}) : b;
+    bool both_2d = a.ndims() == 2 && b.ndims() == 2;
+
+    auto l_shape = std::vector(lhs.shape().begin(), lhs.shape().end() - 2);
+    auto r_shape = std::vector(rhs.shape().begin(), rhs.shape().end() - 2);
+    auto shape = broadcast_shapes(l_shape, r_shape);
+    shape.push_back(*(a.shape().end() - 2));
+    shape.push_back(*(b.shape().end() - 1));
+
+    auto out = Tensor<T>::zeros(shape, a.f());
+    ops_->matrix_multiply(lhs, rhs, out);
+
+    if (both_2d) {
+      out = out.view({*(shape.end() - 2), *(shape.end() - 1)});
+    }
+
+    return out;
+  }
+
  private:
   std::shared_ptr<TensorOps<T>> ops_;
 };
@@ -207,7 +232,19 @@ class SimpleOps : public TensorOps<T> {
     return reduce_fn;
   }
 
-  Tensor<T> matmul(const Tensor<T>& lhs, const Tensor<T>& rhs) override {
+  void matrix_multiply(const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) override {
+    for (auto&& idx : out.indices()) {
+      T v = 0;
+      for (std::size_t k = 0; k < lhs.shape().back(); k++) {
+        auto lhs_idx = broadcasted_to_index_in_shape(idx, lhs.shape());
+        *(lhs_idx.end() - 1) = k;
 
+        auto rhs_idx = broadcasted_to_index_in_shape(idx, rhs.shape());
+        *(rhs_idx.end() - 2) = k;
+
+        v += lhs[lhs_idx] * rhs[rhs_idx];
+      }
+      out[idx] = v;
+    }
   }
 };

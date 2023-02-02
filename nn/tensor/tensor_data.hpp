@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <iomanip>
+#include <iostream>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -134,7 +135,7 @@ TensorData<T>::TensorData(DataPtr data, Strides strides, Shape shape)
       ndims_(strides_.size()) {
   assert(strides_.size() == shape_.size() && "Strides and shape must be same length.");
   assert(data_->size() ==
-             std::accumulate(shape_.begin(), shape_.end(), 1U, std::multiplies<std::size_t>()) &&
+             std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies()) &&
          "Size of data must match shape.");
 }
 
@@ -142,7 +143,7 @@ template <typename T>
 TensorData<T> TensorData<T>::permute(const Shape& order) const {
   Shape shape;
   Strides strides;
-  for (int i = 0; i < shape_.size(); i++) {
+  for (std::size_t i = 0; i < shape_.size(); i++) {
     assert(std::find(order.begin(), order.end(), i) != order.end() &&
            "Position required for each dimension.");
 

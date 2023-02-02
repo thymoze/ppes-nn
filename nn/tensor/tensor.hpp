@@ -108,6 +108,13 @@ class Tensor {
                    [](auto v) { return static_cast<T>(v); });
     return View<T>()(*this, Tensor<T>::make(std::move(data)));
   }
+  [[nodiscard]] Tensor<T> reshape(const Shape& shape) const {
+    if (data_.is_contiguous()) {
+      return view(shape);
+    } else {
+      return contiguous().view(shape);
+    }
+  }
 
   [[nodiscard]] const TensorData<T>& data() const { return data_; }
 
@@ -226,6 +233,11 @@ Tensor<T> mean(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt
   } else {
     return sum(t, dim) / Tensor<T>::make(t.shape()[*dim]);
   }
+}
+
+template <typename T>
+Tensor<T> matmul(const Tensor<T>& lhs, const Tensor<T>& rhs) {
+  return MatMul<T>()(lhs, rhs);
 }
 
 template <typename T>
