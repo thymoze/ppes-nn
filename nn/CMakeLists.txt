@@ -11,6 +11,13 @@ add_library(nn
   nn/dataset/dataset.hpp
   nn/dataset/mnist_dataset.hpp
 
+  tensor/tensor.hpp
+  tensor/tensor_data.hpp
+  tensor/tensor_ops.hpp
+  tensor/tensor_functions.hpp
+  tensor/tensor_util.hpp
+  tensor/autodiff.hpp
+
   matrix/matrix.hpp
   matrix/ops.hpp
 
