@@ -72,6 +72,7 @@ void backpropagate(const Tensor<T>& variable, const Tensor<T>& grad) {
     } else {
       auto gradients = t.backprop_step(derivatives.at(t.id()));
       for (auto& [input, g] : gradients) {
+        if (input.is_constant()) continue;
         auto id = input.id();
         if (derivatives.find(id) != derivatives.end()) {
           derivatives.at(id) = derivatives.at(id) + g;

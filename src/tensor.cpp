@@ -1,28 +1,48 @@
-#include <vector>
-#include <tensor/tensor.hpp>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <nn/dataset/mnist_dataset.hpp>
+#include <nn/modules/linear.hpp>
+#include <nn/modules/sigmoid.hpp>
+#include <nn/mse.hpp>
+#include <nn/optim/sgd.hpp>
+#include <nn/sequential.hpp>
+#include <tensor/tensor.hpp>
+#include <vector>
 
 int main() {
-  std::vector<double> data(18);
-  std::iota(data.begin(), data.end(), 0);
+  auto mnist = nn::MnistDataset<double>("../../data", nn::MnistDataset<double>::Set::TRAIN);
 
-  auto s = Tensor<double>::make({3, 2, 3}, std::move(data));
-  s.requires_grad(true);
-  auto t = Tensor<double>::make({3, 2}, {3, 3, 3, 3, 3, 3});
-  t.requires_grad(true);
+  auto model = nn::Sequential<double>();
+  model.add(nn::Linear<double>(28 * 28, 300));
+  model.add(nn::Sigmoid<double>());
+  model.add(nn::Linear<double>(300, 10));
 
-  auto u = matmul(s, t);
-  auto r = sum(u);
+  auto optimizer = nn::SGD<double>(model.params(), 0.0001);
 
-  r.backward();
+  for (int epoch = 0; epoch < 1; epoch++) {
+    double epoch_loss = 0;
+    int i = 0;
+    for (auto&& [input, target] : mnist) {
+      optimizer.zero_grad();
 
-  std::cout << s << std::endl;
-  std::cout << t << std::endl;
-  std::cout << u << std::endl;
-  std::cout << std::endl;
-  std::cout << (static_cast<bool>(s.grad()) ? (*s.grad()).to_string() : "s has no grad")
-            << std::endl;
-  std::cout << (static_cast<bool>(t.grad()) ? (*t.grad()).to_string() : "t has no grad")
-            << std::endl;
+      auto in = input.view({1, input.size()});
+      auto output = model(in);
+
+      auto target_onehot = Tensor<double>::zeros({1, 10});
+      target_onehot(0, static_cast<std::size_t>(target.item())) = 1;
+      auto loss = nn::mse(output, target_onehot);
+
+      loss.backward();
+      optimizer.step();
+
+      epoch_loss += loss.item();
+      std::cout << "\33[2K\r" << std::setw(3) << i++ << ": " << loss.item() << std::flush;
+    }
+    std::cout << "\33[2K\r";
+    epoch_loss = epoch_loss / mnist.size();
+
+    if (epoch % 100 == 0) {
+      std::cout << "Epoch " << epoch << ": Loss = " << epoch_loss << std::endl;
+    }
+  }
 }

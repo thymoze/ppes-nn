@@ -23,12 +23,12 @@ class Sequential : public Module<T> {
     this->params_.insert(this->params_.end(), module->params().begin(), module->params().end());
   }
 
-  std::vector<Variable<T>> forward(const std::vector<Variable<T>>& inputs) override {
+  Tensor<T> forward(const Tensor<T>& inputs) override {
     auto out = inputs;
     for (auto& module : modules_) {
       out = module->forward(out);
     }
-    return {out};
+    return out;
   };
 
   std::string save(const std::string& model_name) override {

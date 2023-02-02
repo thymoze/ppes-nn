@@ -8,6 +8,7 @@
 #include <nn/dataset/dataset.hpp>
 #include <nn/dataset/mnist_dataset.hpp>
 #include <string>
+#include <tensor/tensor.hpp>
 
 namespace fs = std::filesystem;
 
@@ -15,7 +16,7 @@ namespace nn {
 
 /// @brief A dataset wrapper for the MNIST Database: http://yann.lecun.com/exdb/mnist/
 template <typename T>
-class MnistDataset : public Dataset<Matrix<T>, Matrix<T>> {
+class MnistDataset : public Dataset<Tensor<T>, Tensor<T>> {
  public:
   enum class Set { TRAIN, TEST };
 
@@ -53,8 +54,8 @@ class MnistDataset : public Dataset<Matrix<T>, Matrix<T>> {
     assert(images_.size() == labels_.size() && "Images and labels need to be the same size.");
   }
 
-  std::pair<Matrix<T>, Matrix<T>> get(std::size_t idx) const override {
-    return std::make_pair(images_[idx], labels_[idx]);
+  std::pair<Tensor<T>, Tensor<T>> get(std::size_t idx) const override {
+    return std::pair(images_[idx], labels_[idx]);
   };
 
   std::size_t size() const override { return images_.size(); };
@@ -62,7 +63,7 @@ class MnistDataset : public Dataset<Matrix<T>, Matrix<T>> {
  private:
   MnistDataset() = default;
 
-  std::vector<Matrix<T>> load_data(std::istream& file) const {
+  std::vector<Tensor<T>> load_data(std::istream& file) const {
     // https://www.fon.hum.uva.nl/praat/manual/IDX_file_format.html
 
     std::uint16_t _magic;
@@ -91,7 +92,7 @@ class MnistDataset : public Dataset<Matrix<T>, Matrix<T>> {
 
     auto nelements = size * size;
 
-    std::vector<Matrix<T>> result;
+    std::vector<Tensor<T>> result;
     result.reserve(count);
 
     for (std::uint32_t i = 0; i < count; i++) {
@@ -104,8 +105,7 @@ class MnistDataset : public Dataset<Matrix<T>, Matrix<T>> {
         data.push_back(static_cast<T>(byte));
       }
 
-      result.emplace_back(Matrix<T>(static_cast<std::size_t>(size), static_cast<std::size_t>(size),
-                                    std::move(data)));
+      result.emplace_back(Tensor<T>::make({size, size}, std::move(data)));
     }
 
     return result;
@@ -113,8 +113,8 @@ class MnistDataset : public Dataset<Matrix<T>, Matrix<T>> {
 
   fs::path path_;
   Set set_;
-  std::vector<Matrix<T>> images_;
-  std::vector<Matrix<T>> labels_;
+  std::vector<Tensor<T>> images_;
+  std::vector<Tensor<T>> labels_;
 };
 
 }  // namespace nn

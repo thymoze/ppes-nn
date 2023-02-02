@@ -6,6 +6,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <tensor/tensor_util.hpp>
 
 Shape broadcast_shapes(const Shape& lhs, const Shape& rhs) {
@@ -18,7 +19,9 @@ Shape broadcast_shapes(const Shape& lhs, const Shape& rhs) {
     if (l == r || l == 1 || r == 1) {
       shape.push_back(std::max(l, r));
     } else {
-      throw std::logic_error("Shapes not broadcastable");
+      throw std::logic_error("Shapes not broadcastable " + std::to_string(l) +
+                             " != " + std::to_string(r) + " of " + to_string(lhs) + " and " +
+                             to_string(rhs));
     }
   }
   std::reverse(shape.begin(), shape.end());
@@ -165,8 +168,12 @@ class TensorBackend {
     Tensor<T> rhs = b.ndims() == 2 ? b.reshape({1, b.shape()[0], b.shape()[1]}) : b;
     bool both_2d = a.ndims() == 2 && b.ndims() == 2;
 
-    auto l_shape = std::vector(lhs.shape().begin(), lhs.shape().end() - 2);
-    auto r_shape = std::vector(rhs.shape().begin(), rhs.shape().end() - 2);
+    auto l_shape =
+        std::vector(lhs.shape().begin(),
+                    lhs.shape().end() - std::min(lhs.shape().size(), static_cast<std::size_t>(2)));
+    auto r_shape =
+        std::vector(rhs.shape().begin(),
+                    rhs.shape().end() - std::min(rhs.shape().size(), static_cast<std::size_t>(2)));
     auto shape = broadcast_shapes(l_shape, r_shape);
     shape.push_back(*(a.shape().end() - 2));
     shape.push_back(*(b.shape().end() - 1));

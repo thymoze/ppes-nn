@@ -1,4 +1,7 @@
+#pragma once
+
 #include <algorithm>
+#include <nn/random.hpp>
 #include <optional>
 #include <tensor/autodiff.hpp>
 #include <tensor/tensor_data.hpp>
@@ -51,6 +54,19 @@ class Tensor {
 
     return Tensor<T>(std::move(data), std::move(backend));
   }
+  static Tensor<T> rand(Shape shape, T low, T hi) {
+    auto backend = TensorBackend<T>(SimpleOps<T>());
+    return Tensor<T>::rand(std::move(shape), std::move(backend), low, hi);
+  }
+  static Tensor<T> rand(Shape shape, TensorBackend<T> backend, T low, T hi) {
+    auto size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies());
+    std::vector<T> data(size);
+    std::generate(data.begin(), data.end(), [&low, &hi] { return nn::random::rand(low, hi); });
+
+    auto _tensor =
+        TensorData<T>(std::make_shared<std::vector<T>>(std::move(data)), std::move(shape));
+    return Tensor<T>(std::move(_tensor), std::move(backend));
+  }
 
   [[nodiscard]] bool requires_grad() const { return static_cast<bool>(history_); }
 
@@ -68,6 +84,7 @@ class Tensor {
 
   void backward();
   void add_grad(const Tensor<T>& x);
+  void zero_grad() { *grad_ = std::nullopt; }
 
   /// True, if the tensor was created by the user, i.e. does not have a `last_fn`
   [[nodiscard]] bool is_leaf() const { return history_ && !history_->last_fn; }
@@ -233,6 +250,16 @@ Tensor<T> mean(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt
   } else {
     return sum(t, dim) / Tensor<T>::make(t.shape()[*dim]);
   }
+}
+
+template <typename T>
+Tensor<T> relu(const Tensor<T>& t) {
+  return ReLU<T>()(t);
+}
+
+template <typename T>
+Tensor<T> sigmoid(const Tensor<T>& t) {
+  return Sigmoid<T>()(t);
 }
 
 template <typename T>

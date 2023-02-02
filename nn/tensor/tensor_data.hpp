@@ -7,6 +7,7 @@
 #include <numeric>
 #include <string>
 #include <tensor/tensor_util.hpp>
+#include <utility>
 
 Indices to_index(std::size_t ord, const Shape& shape) {
   Indices index;
@@ -108,7 +109,9 @@ class TensorData {
   ref get(const Indices& indices);
   const_ref get(const Indices& indices) const;
 
-  [[nodiscard]] bool is_contiguous() const { return std::is_sorted(strides_.rbegin(), strides_.rend()); }
+  [[nodiscard]] bool is_contiguous() const {
+    return std::is_sorted(strides_.rbegin(), strides_.rend());
+  }
   [[nodiscard]] const DataPtr& data() const { return data_; }
   [[nodiscard]] IndicesIterator indices() const { return IndicesIterator(shape_); }
   [[nodiscard]] const Strides& strides() const { return strides_; }
@@ -134,8 +137,7 @@ TensorData<T>::TensorData(DataPtr data, Strides strides, Shape shape)
       shape_(std::move(shape)),
       ndims_(strides_.size()) {
   assert(strides_.size() == shape_.size() && "Strides and shape must be same length.");
-  assert(data_->size() ==
-             std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies()) &&
+  assert(data_->size() == std::accumulate(shape_.begin(), shape_.end(), 1U, std::multiplies()) &&
          "Size of data must match shape.");
 }
 

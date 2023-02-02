@@ -1,7 +1,7 @@
 #pragma once
 
 #include <algorithm>
-#include <autograd/autograd.hpp>
+#include <tensor/tensor.hpp>
 #include <vector>
 
 namespace nn {
@@ -9,27 +9,28 @@ namespace nn {
 template <typename T>
 class SGD {
  public:
-  SGD(const std::vector<Variable<T>>& parameters, double learning_rate = 0.01)
-      : _params(parameters), _learning_rate(learning_rate) {}
+  SGD(const std::vector<Parameter<T>>& parameters, double learning_rate = 0.01)
+      : params_(parameters), learning_rate_(Tensor<T>::make(static_cast<T>(learning_rate))) {}
 
   void step() {
-    for (auto& param : _params) {
-      auto& grad = param.grad().value();
+    for (auto& param : params_) {
       auto& data = param.value();
+      assert(data.grad() && "Parameter must have a gradient.");
+      auto& grad = *data.grad();
 
-      data = data - (_learning_rate * grad);
+      param.update(data - (learning_rate_ * grad));
     }
   }
 
   void zero_grad() {
-    for (auto& param : _params) {
-      param.zero_grad();
+    for (auto& param : params_) {
+      param.value().zero_grad();
     }
   }
 
  private:
-  std::vector<Variable<T>> _params;
-  double _learning_rate = 0;
+  std::vector<Parameter<T>> params_;
+  Tensor<T> learning_rate_;
 };
 
 }  // namespace nn

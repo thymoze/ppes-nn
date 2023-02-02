@@ -1,11 +1,11 @@
 #pragma once
 
-#include <autograd/autograd.hpp>
-#include <matrix/matrix.hpp>
+#include <tensor/tensor.hpp>
 
 namespace nn {
+
 template <typename T>
-Variable<T> mse(Variable<T> pred, Variable<T> target) {
+Tensor<T> mse(const Tensor<T>& pred, const Tensor<T>& target) {
   auto diff = target - pred;
   return mean(diff * diff);
 }
