@@ -164,8 +164,8 @@ class TensorBackend {
     assert(*(a.shape().end() - 1) == *(b.shape().end() - 2) &&
            "Matrix multiplication dimensions don't match.");
 
-    Tensor<T> lhs = a.ndims() == 2 ? a.reshape({1, a.shape()[0], a.shape()[1]}) : a;
-    Tensor<T> rhs = b.ndims() == 2 ? b.reshape({1, b.shape()[0], b.shape()[1]}) : b;
+    Tensor<T> lhs = a.ndims() == 2 ? a.unsqueeze(0) : a;
+    Tensor<T> rhs = b.ndims() == 2 ? b.unsqueeze(0) : b;
     bool both_2d = a.ndims() == 2 && b.ndims() == 2;
 
     auto l_shape =

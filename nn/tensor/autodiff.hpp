@@ -1,5 +1,6 @@
 #pragma once
 
+#include <any>
 #include <cassert>
 #include <functional>
 #include <memory>
@@ -7,30 +8,40 @@
 #include <unordered_map>
 #include <unordered_set>
 
-template <typename T>
 class Context {
  public:
   explicit Context(bool no_grad) : no_grad_(no_grad), saved_values_() {}
 
-  void save_for_backward(std::vector<Tensor<T>> values) {
+  template <typename T>
+  void save_for_backward(const T& value) {
+    if (no_grad_) {
+      return;
+    }
+
+    saved_values_.emplace_back(value);
+  }
+
+  template <typename T>
+  void save_for_backward(const std::vector<T>& values) {
     if (no_grad_) {
       return;
     }
     saved_values_.reserve(saved_values_.size() + values.size());
-    std::move(values.begin(), values.end(), std::back_inserter(saved_values_));
+    std::transform(values.begin(), values.end(), std::back_inserter(saved_values_),
+                   [](auto v) { return std::any(v); });
   }
 
-  [[nodiscard]] const std::vector<Tensor<T>>& saved_values() const { return saved_values_; }
+  [[nodiscard]] const std::vector<std::any>& saved_values() const { return saved_values_; }
 
  private:
   bool no_grad_;
-  std::vector<Tensor<T>> saved_values_;
+  std::vector<std::any> saved_values_;
 };
 
 template <typename T>
 struct History {
   std::unique_ptr<Function<T>> last_fn;
-  std::unique_ptr<Context<T>> ctx;
+  std::unique_ptr<Context> ctx;
   std::vector<Tensor<T>> inputs;
 };
 

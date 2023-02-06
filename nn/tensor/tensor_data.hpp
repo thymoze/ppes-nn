@@ -34,8 +34,9 @@ Strides shape_to_strides(const Shape& shape) {
 
 void broadcasted_to_index_in_shape(const Indices& index, const Shape& shape, Indices& out_index) {
   out_index.clear();
-  out_index.insert(out_index.begin(), shape.size(), 0);
-  std::transform(index.end() - shape.size(), index.end(), shape.begin(), out_index.begin(),
+  out_index.reserve(shape.size());
+  std::transform(index.end() - shape.size(), index.end(), shape.begin(),
+                 std::back_inserter(out_index),
                  [](auto ind, auto dim) { return ind < dim ? ind : 0; });
 }
 

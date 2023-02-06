@@ -10,7 +10,7 @@
 #include <vector>
 
 int main() {
-  auto mnist = nn::MnistDataset<double>("../../data", nn::MnistDataset<double>::Set::TRAIN);
+  auto mnist = nn::MnistDataset<double>("../../data", nn::MnistDataset<double>::Set::TRAIN, 50);
 
   auto model = nn::Sequential<double>();
   model.add(nn::Linear<double>(28 * 28, 300));
@@ -25,11 +25,13 @@ int main() {
     for (auto&& [input, target] : mnist) {
       optimizer.zero_grad();
 
-      auto in = input.view({1, input.size()});
+      auto in = input.view({input.shape()[0], 28 * 28});
       auto output = model(in);
 
-      auto target_onehot = Tensor<double>::zeros({1, 10});
-      target_onehot(0, static_cast<std::size_t>(target.item())) = 1;
+      auto target_onehot = Tensor<double>::zeros({input.shape()[0], 10});
+      for (std::size_t d = 0; d < input.shape()[0]; ++d) {
+        target_onehot(d, static_cast<std::size_t>(target(d, 0, 0))) = 1;
+      }
       auto loss = nn::mse(output, target_onehot);
 
       loss.backward();

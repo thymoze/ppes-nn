@@ -33,5 +33,4 @@ class SimpleOps;
 template <typename T>
 struct History;
 
-template <typename T>
 class Context;

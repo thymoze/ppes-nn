@@ -120,10 +120,10 @@ class Tensor {
 
   [[nodiscard]] Tensor<T> contiguous() const { return Copy<T>()(*this); }
   [[nodiscard]] Tensor<T> view(const Shape& shape) const {
-    std::vector<T> data(shape.size());
-    std::transform(shape.begin(), shape.end(), data.begin(),
+    std::vector<T> new_shape(shape.size());
+    std::transform(shape.begin(), shape.end(), new_shape.begin(),
                    [](auto v) { return static_cast<T>(v); });
-    return View<T>()(*this, Tensor<T>::make(std::move(data)));
+    return View<T>()(*this, Tensor<T>::make(std::move(new_shape)));
   }
   [[nodiscard]] Tensor<T> reshape(const Shape& shape) const {
     if (data_.is_contiguous()) {
@@ -132,6 +132,8 @@ class Tensor {
       return contiguous().view(shape);
     }
   }
+  [[nodiscard]] Tensor<T> squeeze() const { return Squeeze<T>()(*this); };
+  [[nodiscard]] Tensor<T> unsqueeze(std::size_t dim) const { return Unsqueeze<T>()(*this, Tensor<T>::make(static_cast<T>(dim))); };
 
   [[nodiscard]] const TensorData<T>& data() const { return data_; }
 
@@ -272,4 +274,32 @@ template <typename T>
 std::ostream& operator<<(std::ostream& stream, const Tensor<T>& t) {
   stream << t.to_string();
   return stream;
+}
+
+template <typename T, typename It>
+[[nodiscard]] Tensor<T> stack(It start, It end) {
+  assert(std::distance(start, end) >= 2 && "Need at least 2 tensors to stack.");
+
+  Shape shape = (*start).shape();
+  shape.insert(shape.begin(), std::distance(start, end));
+
+  Strides strides = (*start).strides();
+  strides.insert(strides.begin(), (*start).size());
+
+  auto data = std::vector<T>();
+  data.reserve((*start).size() * std::distance(start, end));
+
+  for (auto& t = start; t != end; ++t) {
+    assert(std::equal(shape.begin() + 1, shape.end(), (*t).shape().begin(), (*t).shape().end()) &&
+           "All stacked tensors need to be of equal shape.");
+    assert(
+        std::equal(strides.begin() + 1, strides.end(), (*t).strides().begin(), (*t).strides().end()) &&
+        "All stacked tensors need to have equal strides.");
+
+    data.insert(data.end(), (*t).data().data()->begin(), (*t).data().data()->end());
+  }
+
+  auto tensor = TensorData<T>{std::make_shared<std::vector<T>>(std::move(data)), std::move(strides),
+                              std::move(shape)};
+  return Tensor<T>{std::move(tensor), (*start).f()};
 }

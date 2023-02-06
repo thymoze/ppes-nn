@@ -23,7 +23,7 @@ class MnistDataset : public Dataset<Tensor<T>, Tensor<T>> {
   /// @param path Path to the directory containing the *-images.idx3-ubyte and *-labels.idx1-ubyte
   /// files
   /// @param set TRAIN or TEST to read the train-* or t10k-* files
-  MnistDataset(const fs::path& path, Set set) {
+  MnistDataset(const fs::path& path, Set set, int batch_size) : batch_size_(batch_size) {
     std::string type = set == Set::TRAIN ? "train" : "t10k";
 
     auto images_file_path = path / (type + "-images-idx3-ubyte");
@@ -42,7 +42,8 @@ class MnistDataset : public Dataset<Tensor<T>, Tensor<T>> {
   };
 
   MnistDataset(std::uint8_t* img_start, std::uint8_t* img_end, std::uint8_t* label_start,
-               std::uint8_t* label_end) {
+               std::uint8_t* label_end, int batch_size)
+      : batch_size_(batch_size) {
     membuf img_buf(reinterpret_cast<char*>(img_start), reinterpret_cast<char*>(img_end));
     std::istream img_stream(&img_buf);
     images_ = load_data(img_stream);
@@ -55,10 +56,21 @@ class MnistDataset : public Dataset<Tensor<T>, Tensor<T>> {
   }
 
   std::pair<Tensor<T>, Tensor<T>> get(std::size_t idx) const override {
-    return std::pair(images_[idx], labels_[idx]);
+    if (batch_size_ == 1) {
+      return std::pair(images_[idx], labels_[idx]);
+    } else {
+      auto imgs = stack<T>(images_.begin() + (idx * batch_size_),
+                        std::min(images_.begin() + ((idx + 1) * batch_size_), images_.end()));
+
+      auto lbls = stack<T>(labels_.begin() + (idx * batch_size_),
+                        std::min(labels_.begin() + ((idx + 1) * batch_size_), labels_.end()));
+
+      return std::pair(imgs, lbls);
+    }
   };
 
-  std::size_t size() const override { return images_.size(); };
+  std::size_t size() const override { return images_.size(); }
+  int batch_size() const { return batch_size_; }
 
  private:
   MnistDataset() = default;
@@ -111,8 +123,7 @@ class MnistDataset : public Dataset<Tensor<T>, Tensor<T>> {
     return result;
   };
 
-  fs::path path_;
-  Set set_;
+  int batch_size_;
   std::vector<Tensor<T>> images_;
   std::vector<Tensor<T>> labels_;
 };
