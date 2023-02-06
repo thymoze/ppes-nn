@@ -197,9 +197,10 @@ class SimpleOps : public TensorOps<T> {
  public:
   TensorOps<T>::ZipTensor zip(TensorOps<T>::ZipEl fn) override {
     auto zip_fn = [fn](const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) {
-      for (auto&& idx : out.indices()) {
-        auto lhs_idx = broadcasted_to_index_in_shape(idx, lhs.shape());
-        auto rhs_idx = broadcasted_to_index_in_shape(idx, rhs.shape());
+      Indices lhs_idx, rhs_idx;
+      for (auto& idx : out.indices()) {
+        broadcasted_to_index_in_shape(idx, lhs.shape(), lhs_idx);
+        broadcasted_to_index_in_shape(idx, rhs.shape(), rhs_idx);
 
         out[idx] = fn(lhs[lhs_idx], rhs[rhs_idx]);
       }
@@ -210,10 +211,17 @@ class SimpleOps : public TensorOps<T> {
 
   TensorOps<T>::MapTensor map(TensorOps<T>::MapEl fn) override {
     auto map_fn = [fn](const Tensor<T>& t, Tensor<T>& out) {
-      for (auto&& idx : out.indices()) {
-        auto t_idx = broadcasted_to_index_in_shape(idx, t.shape());
+      if (std::equal(t.strides().begin(), t.strides().end(), out.strides().begin(),
+                     out.strides().end())) {
+        std::transform(t.data().data()->begin(), t.data().data()->end(), out.data().data()->begin(),
+                       fn);
+      } else {
+        Indices t_idx;
+        for (auto& idx : out.indices()) {
+          broadcasted_to_index_in_shape(idx, t.shape(), t_idx);
 
-        out[idx] = fn(t[t_idx]);
+          out[idx] = fn(t[t_idx]);
+        }
       }
     };
 
@@ -223,7 +231,7 @@ class SimpleOps : public TensorOps<T> {
   TensorOps<T>::ReduceTensor reduce(TensorOps<T>::ReduceEl fn, T start) override {
     auto reduce_fn = [fn, start](const Tensor<T>& t, std::size_t dim, Tensor<T>& out) {
       auto dim_size = t.shape()[dim];
-      for (auto&& idx : out.indices()) {
+      for (auto& idx : out.indices()) {
         auto t_idx = idx;
 
         auto v = start;
@@ -240,13 +248,14 @@ class SimpleOps : public TensorOps<T> {
   }
 
   void matrix_multiply(const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) override {
-    for (auto&& idx : out.indices()) {
+    Indices lhs_idx, rhs_idx;
+    for (auto& idx : out.indices()) {
       T v = 0;
       for (std::size_t k = 0; k < lhs.shape().back(); k++) {
-        auto lhs_idx = broadcasted_to_index_in_shape(idx, lhs.shape());
+        broadcasted_to_index_in_shape(idx, lhs.shape(), lhs_idx);
         *(lhs_idx.end() - 1) = k;
 
-        auto rhs_idx = broadcasted_to_index_in_shape(idx, rhs.shape());
+        broadcasted_to_index_in_shape(idx, rhs.shape(), rhs_idx);
         *(rhs_idx.end() - 2) = k;
 
         v += lhs[lhs_idx] * rhs[rhs_idx];

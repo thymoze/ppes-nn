@@ -9,16 +9,16 @@
 #include <tensor/tensor_util.hpp>
 #include <utility>
 
-Indices to_index(std::size_t ord, const Shape& shape) {
-  Indices index;
+void to_index(int ord, const Shape& shape, Indices& out_index) {
+  out_index.clear();
+  out_index.reserve(shape.size());
   int remaining = ord;
   for (auto i = shape.rbegin(); i != shape.rend(); i++) {
     auto [quot, rem] = std::div(remaining, static_cast<int>(*i));
-    index.push_back(rem);
+    out_index.push_back(rem);
     remaining = quot;
   }
-  std::reverse(index.begin(), index.end());
-  return index;
+  std::reverse(out_index.begin(), out_index.end());
 }
 
 Strides shape_to_strides(const Shape& shape) {
@@ -32,11 +32,11 @@ Strides shape_to_strides(const Shape& shape) {
   return strides;
 };
 
-Indices broadcasted_to_index_in_shape(const Indices& index, const Shape& shape) {
-  auto res = Indices(shape.size());
-  std::transform(index.end() - res.size(), index.end(), shape.begin(), res.begin(),
+void broadcasted_to_index_in_shape(const Indices& index, const Shape& shape, Indices& out_index) {
+  out_index.clear();
+  out_index.insert(out_index.begin(), shape.size(), 0);
+  std::transform(index.end() - shape.size(), index.end(), shape.begin(), out_index.begin(),
                  [](auto ind, auto dim) { return ind < dim ? ind : 0; });
-  return res;
 }
 
 class IndicesIterator {
@@ -55,10 +55,13 @@ class IndicesIterator {
     using reference         = value_type&;
     // clang-format on
 
-    explicit Iterator(Shape shape, std::size_t idx, std::size_t size)
-        : shape_(std::move(shape)), idx_(idx), size_(size) {}
+    explicit Iterator(Shape shape, int idx, int size)
+        : shape_(std::move(shape)), idx_(idx), size_(size), buffer_(shape_.size()) {}
 
-    value_type operator*() { return to_index(idx_, shape_); }
+    reference operator*() {
+      to_index(idx_, shape_, buffer_);
+      return buffer_;
+    }
 
     // Prefix increment
     Iterator& operator++() {
@@ -82,6 +85,7 @@ class IndicesIterator {
     Shape shape_;
     std::size_t idx_;
     std::size_t size_;
+    Indices buffer_;
   };
 
   Iterator begin() { return Iterator(shape_, 0, size_); };
@@ -181,7 +185,7 @@ std::size_t TensorData<T>::indices_to_position(const Indices& indices) const {
 template <typename T>
 std::string TensorData<T>::to_string() const {
   std::stringstream res;
-  for (auto&& index : indices()) {
+  for (auto& index : indices()) {
     std::string l;
     if (std::all_of(index.begin(), index.end(), [](auto v) { return v == 0; })) {
       l.insert(0, index.size(), '[');

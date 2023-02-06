@@ -138,6 +138,7 @@ class Tensor {
   [[nodiscard]] IndicesIterator indices() const { return data_.indices(); }
 
   [[nodiscard]] const Shape& shape() const { return data_.shape(); }
+  [[nodiscard]] const Strides& strides() const { return data_.strides(); }
   [[nodiscard]] std::size_t size() const { return data_.size(); }
   [[nodiscard]] std::size_t ndims() const { return data_.ndims(); }
   [[nodiscard]] std::string to_string() const { return data_.to_string(); }

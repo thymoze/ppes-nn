@@ -298,7 +298,7 @@ class MatMul : public Function<T> {
 
     auto transpose = [](const Tensor<T>& t) {
       auto ndims = t.ndims();
-      std::vector<std::size_t> order(ndims);
+      Shape order(ndims);
       std::iota(order.begin(), order.end(), 0);
       auto last = order[ndims - 1];
       order[ndims - 1] = order[ndims - 2];
