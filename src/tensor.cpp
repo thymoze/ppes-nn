@@ -38,7 +38,8 @@ int main() {
       optimizer.step();
 
       epoch_loss += loss.item();
-      std::cout << "\33[2K\r" << std::setw(3) << i++ << ": " << loss.item() << std::flush;
+      i += mnist.batch_size();
+      std::cout << "\33[2K\r" << std::setw(3) << i << ": " << loss.item() << std::flush;
     }
     std::cout << "\33[2K\r";
     epoch_loss = epoch_loss / mnist.size();

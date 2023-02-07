@@ -8,6 +8,10 @@
 #include <tensor/tensor_functions.hpp>
 #include <tensor/tensor_ops.hpp>
 
+#ifndef DEFAULT_BACKEND
+#define DEFAULT_BACKEND TensorBackend<T>(MTOps<T>())
+#endif
+
 template <typename T>
 class Tensor {
  public:
@@ -26,7 +30,7 @@ class Tensor {
     return Tensor<T>::make({data.size()}, std::move(data));
   }
   static Tensor<T> make(Shape shape, std::vector<T>&& buffer) {
-    auto backend = TensorBackend<T>(SimpleOps<T>());
+    auto backend = DEFAULT_BACKEND;
     return Tensor<T>::make(std::move(shape), std::move(buffer), std::move(backend));
   }
   static Tensor<T> make(Shape shape, std::vector<T>&& buffer, TensorBackend<T> backend) {
@@ -35,7 +39,7 @@ class Tensor {
     return Tensor<T>(std::move(data), std::move(backend));
   }
   static Tensor<T> zeros(Shape shape) {
-    auto backend = TensorBackend<T>(SimpleOps<T>());
+    auto backend = DEFAULT_BACKEND;
     return Tensor<T>::zeros(std::move(shape), std::move(backend));
   }
   static Tensor<T> zeros(Shape shape, TensorBackend<T> backend) {
@@ -45,7 +49,7 @@ class Tensor {
     return Tensor<T>(std::move(data), std::move(backend));
   }
   static Tensor<T> ones(Shape shape) {
-    auto backend = TensorBackend<T>(SimpleOps<T>());
+    auto backend = DEFAULT_BACKEND;
     return Tensor<T>::zeros(std::move(shape), std::move(backend));
   }
   static Tensor<T> ones(Shape shape, TensorBackend<T> backend) {
@@ -55,7 +59,7 @@ class Tensor {
     return Tensor<T>(std::move(data), std::move(backend));
   }
   static Tensor<T> rand(Shape shape, T low, T hi) {
-    auto backend = TensorBackend<T>(SimpleOps<T>());
+    auto backend = DEFAULT_BACKEND;
     return Tensor<T>::rand(std::move(shape), std::move(backend), low, hi);
   }
   static Tensor<T> rand(Shape shape, TensorBackend<T> backend, T low, T hi) {
@@ -133,7 +137,9 @@ class Tensor {
     }
   }
   [[nodiscard]] Tensor<T> squeeze() const { return Squeeze<T>()(*this); };
-  [[nodiscard]] Tensor<T> unsqueeze(std::size_t dim) const { return Unsqueeze<T>()(*this, Tensor<T>::make(static_cast<T>(dim))); };
+  [[nodiscard]] Tensor<T> unsqueeze(std::size_t dim) const {
+    return Unsqueeze<T>()(*this, Tensor<T>::make(static_cast<T>(dim)));
+  };
 
   [[nodiscard]] const TensorData<T>& data() const { return data_; }
 
@@ -144,6 +150,11 @@ class Tensor {
   [[nodiscard]] std::size_t size() const { return data_.size(); }
   [[nodiscard]] std::size_t ndims() const { return data_.ndims(); }
   [[nodiscard]] std::string to_string() const { return data_.to_string(); }
+
+  Tensor<T> to(TensorBackend<T> backend) {
+    backend_ = std::move(backend);
+    return *this;
+  }
 
  private:
   TensorData<T> data_;
@@ -292,9 +303,9 @@ template <typename T, typename It>
   for (auto& t = start; t != end; ++t) {
     assert(std::equal(shape.begin() + 1, shape.end(), (*t).shape().begin(), (*t).shape().end()) &&
            "All stacked tensors need to be of equal shape.");
-    assert(
-        std::equal(strides.begin() + 1, strides.end(), (*t).strides().begin(), (*t).strides().end()) &&
-        "All stacked tensors need to have equal strides.");
+    assert(std::equal(strides.begin() + 1, strides.end(), (*t).strides().begin(),
+                      (*t).strides().end()) &&
+           "All stacked tensors need to have equal strides.");
 
     data.insert(data.end(), (*t).data().data()->begin(), (*t).data().data()->end());
   }

@@ -12,5 +12,8 @@ include(Catch)
 
 add_executable(matrix_test matrix.test.cpp)
 target_link_libraries(matrix_test PRIVATE Catch2::Catch2WithMain nn)
-
 catch_discover_tests(matrix_test)
+
+add_executable(tensor_test tensor.test.cpp)
+target_link_libraries(tensor_test PRIVATE Catch2::Catch2WithMain nn)
+catch_discover_tests(tensor_test)

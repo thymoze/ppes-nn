@@ -67,7 +67,7 @@ class IndicesIterator {
     // Prefix increment
     Iterator& operator++() {
       if (++idx_ >= size_) {
-        idx_ = -1;
+        idx_ = size_;
       }
       return *this;
     }
@@ -79,8 +79,14 @@ class IndicesIterator {
       return tmp;
     }
 
-    bool operator==(const Iterator& that) const { return this->idx_ == that.idx_; };
-    bool operator!=(const Iterator& that) const { return this->idx_ != that.idx_; };
+    Iterator operator+(int that) {
+      idx_ += that;
+      return *this;
+    }
+
+    bool operator==(const Iterator& that) const { return this->idx_ == that.idx_; }
+    bool operator!=(const Iterator& that) const { return this->idx_ != that.idx_; }
+    bool operator<(const Iterator& that) const { return this->idx_ < that.idx_; }
 
    private:
     Shape shape_;
@@ -90,7 +96,7 @@ class IndicesIterator {
   };
 
   Iterator begin() { return Iterator(shape_, 0, size_); };
-  Iterator end() { return Iterator(shape_, -1, size_); };
+  Iterator end() { return Iterator(shape_, size_, size_); };
 
  private:
   Shape shape_;

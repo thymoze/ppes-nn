@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <functional>
+#include <future>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -261,6 +262,35 @@ class SimpleOps : public TensorOps<T> {
         v += lhs[lhs_idx] * rhs[rhs_idx];
       }
       out[idx] = v;
+    }
+  }
+};
+
+template <typename T>
+class MTOps : public SimpleOps<T> {
+ public:
+  void matrix_multiply(const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) override {
+    std::vector<std::future<void>> futures;
+    auto indices = out.indices();
+    for (std::size_t b = 0; b <= out.size() / 500; b++) {
+      futures.push_back(std::async([&out, &lhs, &rhs, &indices, &futures, b]() mutable {
+        Indices lhs_idx, rhs_idx;
+        auto block_end = std::min(indices.begin() + ((b + 1) * 500), indices.end());
+        for (auto idx = indices.begin() + (b * 500); idx != block_end; ++idx) {
+          auto out_idx = *idx;
+          T v = 0;
+          for (std::size_t k = 0; k < lhs.shape().back(); k++) {
+            broadcasted_to_index_in_shape(out_idx, lhs.shape(), lhs_idx);
+            *(lhs_idx.end() - 1) = k;
+
+            broadcasted_to_index_in_shape(out_idx, rhs.shape(), rhs_idx);
+            *(rhs_idx.end() - 2) = k;
+
+            v += lhs[lhs_idx] * rhs[rhs_idx];
+          }
+          out[out_idx] = v;
+        }
+      }));
     }
   }
 };
