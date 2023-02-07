@@ -56,7 +56,7 @@ class IndicesIterator {
     using reference         = value_type&;
     // clang-format on
 
-    explicit Iterator(Shape shape, int idx, int size)
+    explicit Iterator(Shape shape, std::size_t idx, std::size_t size)
         : shape_(std::move(shape)), idx_(idx), size_(size), buffer_(shape_.size()) {}
 
     reference operator*() {

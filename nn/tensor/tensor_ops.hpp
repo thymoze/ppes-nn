@@ -46,6 +46,10 @@ class TensorOps {
   using ReduceEl = std::function<T(T, T)>;
   virtual ReduceTensor reduce(ReduceEl fn, T start) = 0;
 
+  using ReduceIndexTensor = std::function<void(const Tensor<T>&, std::size_t, Tensor<T>&)>;
+  using ReduceIndexEl = std::function<std::pair<T, std::size_t>(T, T, std::size_t, std::size_t)>;
+  virtual ReduceIndexTensor reduce_index(ReduceIndexEl fn, T start) = 0;
+
   virtual void matrix_multiply(const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) = 0;
 };
 
@@ -128,6 +132,16 @@ class TensorBackend {
     return out;
   }
 
+  void eq_zip_out(const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) const {
+    return ops_->zip(std::equal_to<T>())(lhs, rhs, out);
+  }
+  [[nodiscard]] Tensor<T> eq_zip(const Tensor<T>& lhs, const Tensor<T>& rhs) const {
+    auto shape = broadcast_shapes(lhs.shape(), rhs.shape());
+    auto out = Tensor<T>::zeros(shape, lhs.f());
+    eq_zip_out(lhs, rhs, out);
+    return out;
+  }
+
   void inv_back_zip_out(const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) const {
     return ops_->zip([](auto x, auto d) { return -d / (x * x); })(lhs, rhs, out);
   }
@@ -158,6 +172,32 @@ class TensorBackend {
     shape[dim] = 1;
     auto out = Tensor<T>::zeros(shape, t.f());
     mul_reduce_out(t, dim, out);
+    return out;
+  }
+
+  void max_reduce_out(const Tensor<T>& t, std::size_t dim, Tensor<T>& out) const {
+    return ops_->reduce(std::max<T>(), std::numeric_limits<T>::min())(t, dim, out);
+  }
+  [[nodiscard]] Tensor<T> max_reduce(const Tensor<T>& t, std::size_t dim) const {
+    auto shape = t.shape();
+    shape[dim] = 1;
+    auto out = Tensor<T>::zeros(shape, t.f());
+    max_reduce_out(t, dim, out);
+    return out;
+  }
+
+  void argmax_reduce_out(const Tensor<T>& t, std::size_t dim, Tensor<T>& out) const {
+    return ops_->reduce_index(
+        [](auto l, auto r, auto l_idx, auto r_idx) {
+          return l >= r ? std::pair{l, l_idx} : std::pair{r, r_idx};
+        },
+        std::numeric_limits<T>::min())(t, dim, out);
+  }
+  [[nodiscard]] Tensor<T> argmax_reduce(const Tensor<T>& t, std::size_t dim) const {
+    auto shape = t.shape();
+    shape[dim] = 1;
+    auto out = Tensor<T>::zeros(shape, t.f());
+    argmax_reduce_out(t, dim, out);
     return out;
   }
 
@@ -212,17 +252,11 @@ class SimpleOps : public TensorOps<T> {
 
   TensorOps<T>::MapTensor map(TensorOps<T>::MapEl fn) override {
     auto map_fn = [fn](const Tensor<T>& t, Tensor<T>& out) {
-      if (std::equal(t.strides().begin(), t.strides().end(), out.strides().begin(),
-                     out.strides().end())) {
-        std::transform(t.data().data()->begin(), t.data().data()->end(), out.data().data()->begin(),
-                       fn);
-      } else {
-        Indices t_idx;
-        for (auto& idx : out.indices()) {
-          broadcasted_to_index_in_shape(idx, t.shape(), t_idx);
+      Indices t_idx;
+      for (auto& idx : out.indices()) {
+        broadcasted_to_index_in_shape(idx, t.shape(), t_idx);
 
-          out[idx] = fn(t[t_idx]);
-        }
+        out[idx] = fn(t[t_idx]);
       }
     };
 
@@ -242,6 +276,26 @@ class SimpleOps : public TensorOps<T> {
         }
 
         out[idx] = v;
+      }
+    };
+
+    return reduce_fn;
+  }
+
+  TensorOps<T>::ReduceIndexTensor reduce_index(TensorOps<T>::ReduceIndexEl fn, T start) override {
+    auto reduce_fn = [fn, start](const Tensor<T>& t, std::size_t dim, Tensor<T>& out) {
+      auto dim_size = t.shape()[dim];
+      for (auto& idx : out.indices()) {
+        auto t_idx = idx;
+
+        auto v = start;
+        std::size_t ii = 0;
+        for (std::size_t i = 0; i < dim_size; i++) {
+          t_idx[dim] = i;
+          std::tie(v, ii) = fn(v, t[t_idx], ii, i);
+        }
+
+        out[idx] = static_cast<T>(ii);
       }
     };
 
@@ -270,8 +324,8 @@ template <typename T>
 class MTOps : public SimpleOps<T> {
  public:
   void matrix_multiply(const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) override {
-    std::vector<std::future<void>> futures;
     auto indices = out.indices();
+    std::vector<std::future<void>> futures;
     for (std::size_t b = 0; b <= out.size() / 500; b++) {
       futures.push_back(std::async([&out, &lhs, &rhs, &indices, &futures, b]() mutable {
         Indices lhs_idx, rhs_idx;

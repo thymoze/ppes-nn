@@ -69,7 +69,8 @@ class MnistDataset : public Dataset<Tensor<T>, Tensor<T>> {
     }
   };
 
-  std::size_t size() const override { return images_.size(); }
+  std::size_t size() const override { return images_.size() / batch_size_; }
+  std::size_t count() const { return images_.size(); }
   int batch_size() const { return batch_size_; }
 
  private:

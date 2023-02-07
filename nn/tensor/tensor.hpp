@@ -249,6 +249,11 @@ Tensor<T> operator-(const Tensor<T>& lhs, const Tensor<T>& rhs) {
 }
 
 template <typename T>
+Tensor<T> operator==(const Tensor<T>& lhs, const Tensor<T>& rhs) {
+  return lhs.f().eq_zip(lhs, rhs);
+}
+
+template <typename T>
 Tensor<T> sum(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
   if (!dim) {
     return Sum<T>()(t.contiguous().view({t.size()}), Tensor<T>::make(0));
@@ -289,7 +294,8 @@ std::ostream& operator<<(std::ostream& stream, const Tensor<T>& t) {
 
 template <typename T, typename It>
 [[nodiscard]] Tensor<T> stack(It start, It end) {
-  assert(std::distance(start, end) >= 2 && "Need at least 2 tensors to stack.");
+  assert(std::distance(start, end) >= 1 && "Need at least 1 tensor to stack.");
+  auto& backend = (*start).f();
 
   Shape shape = (*start).shape();
   shape.insert(shape.begin(), std::distance(start, end));
@@ -312,5 +318,14 @@ template <typename T, typename It>
 
   auto tensor = TensorData<T>{std::make_shared<std::vector<T>>(std::move(data)), std::move(strides),
                               std::move(shape)};
-  return Tensor<T>{std::move(tensor), (*start).f()};
+  return Tensor<T>{std::move(tensor), backend};
+}
+
+template <typename T>
+[[nodiscard]] Tensor<T> argmax(const Tensor<T>& input, std::optional<std::size_t> dim = std::nullopt) {
+  if (!dim) {
+    return input.f().argmax_reduce(input.contiguous().view({input.size()}), 0);
+  } else {
+    return input.f().argmax_reduce(input, *dim);
+  }
 }

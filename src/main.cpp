@@ -1,60 +1,40 @@
-#include <autograd/autograd.hpp>
 #include <iostream>
-#include <matrix/matrix.hpp>
 #include <nn/modules/linear.hpp>
-#include <nn/modules/relu.hpp>
 #include <nn/modules/sigmoid.hpp>
 #include <nn/mse.hpp>
 #include <nn/optim/sgd.hpp>
 #include <nn/sequential.hpp>
-#include <numeric>
-#include <string>
-#include <utility>
-
-using var = nn::Variable<float>;
 
 int main() {
-  std::vector<std::pair<var, var>> xor_data = {
-      {var(nn::Matrix<float>{1, 2, {0, 0}}), var(nn::Matrix<float>{1, 1, {0}})},
-      {var(nn::Matrix<float>{1, 2, {1, 1}}), var(nn::Matrix<float>{1, 1, {0}})},
-      {var(nn::Matrix<float>{1, 2, {1, 0}}), var(nn::Matrix<float>{1, 1, {1}})},
-      {var(nn::Matrix<float>{1, 2, {0, 1}}), var(nn::Matrix<float>{1, 1, {1}})},
+  nn::random::seed(0x5EED);
+
+  std::pair<Tensor<double>, Tensor<double>> xor_data = {
+      Tensor<double>::make({4, 1, 2}, {0, 0, 1, 1, 1, 0, 0, 1}),
+      Tensor<double>::make({4, 1, 1},    {   0,    0,    1,    1}),
   };
 
-  std::vector<std::pair<var, var>> and_data = {
-      {var(nn::Matrix<float>{1, 2, {0, 0}}), var(nn::Matrix<float>{1, 1, {0}})},
-      {var(nn::Matrix<float>{1, 2, {1, 1}}), var(nn::Matrix<float>{1, 1, {1}})},
-      {var(nn::Matrix<float>{1, 2, {1, 0}}), var(nn::Matrix<float>{1, 1, {0}})},
-      {var(nn::Matrix<float>{1, 2, {0, 1}}), var(nn::Matrix<float>{1, 1, {0}})},
-  };
+  auto model = nn::Sequential<double>();
+  model.add(nn::Linear<double>(2, 3));
+  model.add(nn::Sigmoid<double>());
+  model.add(nn::Linear<double>(3, 1));
 
-  auto model = nn::Sequential<float>();
-  model.add(nn::Linear<float>(2, 3));
-  model.add(nn::Sigmoid<float>());
-  model.add(nn::Linear<float>(3, 1));
+  auto optimizer = nn::SGD(model.params(), 0.25);
 
-  auto optimizer = nn::SGD(model.params(), 0.1);
+  for (int epoch = 0; epoch < 2000; epoch++) {
+    auto& [input, target] = xor_data;
+    auto output = model(input);
 
-  for (int epoch = 0; epoch < 1000; epoch++) {
-    double epoch_loss = 0;
-    for (auto &[input, target] : xor_data) {
-      auto output = model({input})[0];
+    auto loss = nn::mse(output, target);
 
-      auto loss = nn::mse(output, target);
+    optimizer.zero_grad();
+    loss.backward();
 
-      optimizer.zero_grad();
-      loss.backward();
-      optimizer.step();
-      loss.reset_dag();
+    optimizer.step();
 
-      epoch_loss += loss(0, 0);
-    }
-    epoch_loss = epoch_loss / and_data.size();
-
-    if (epoch % 100 == 0) {
-      std::cout << "Epoch " << epoch << ": Loss = " << epoch_loss << std::endl;
+    if (epoch % 200 == 0) {
+      std::cout << "\33[2K\r Epoch " << epoch << ": Loss = " << loss.item() << std::endl;
     }
   }
 
-  model.save("XOR_Model");
+  //model.save("XOR_Model");
 }
