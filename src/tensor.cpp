@@ -1,12 +1,7 @@
 #include <algorithm>
 #include <iostream>
+#include <nn/all.hpp>
 #include <nn/dataset/mnist_dataset.hpp>
-#include <nn/modules/linear.hpp>
-#include <nn/modules/sigmoid.hpp>
-#include <nn/mse.hpp>
-#include <nn/optim/sgd.hpp>
-#include <nn/sequential.hpp>
-#include <tensor/tensor.hpp>
 #include <vector>
 
 int main() {

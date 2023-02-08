@@ -73,7 +73,7 @@ class View : public Function<T> {
                                   const std::vector<Tensor<T>>& inputs) const override {
     assert(inputs.size() == 2 && "View expects 2 inputs.");
     assert(inputs[0].data().is_contiguous() && "Tensor must be contiguous to view.");
-    ctx.save_for_backward(std::vector<Shape>{ inputs[0].shape() });
+    ctx.save_for_backward(std::vector<Shape>{inputs[0].shape()});
 
     Shape shape(inputs[1].size());
     std::transform(inputs[1].indices().begin(), inputs[1].indices().end(), shape.begin(),
@@ -241,6 +241,32 @@ class ReLU : public Function<T> {
     auto saved = std::any_cast<Tensor<T>>(ctx.saved_values()[0]);
     auto ones = Tensor<T>::ones(saved.shape(), saved.f());
     return {grad.f().mul_zip(grad, grad.f().relu_map(ones))};
+  }
+
+ private:
+  [[nodiscard]] std::unique_ptr<Function<T>> current_fn() const override {
+    auto fn = *this;
+    return std::make_unique<decltype(fn)>(std::move(fn));
+  }
+};
+
+template <typename T>
+class Exp : public Function<T> {
+ public:
+  Exp() = default;
+
+  [[nodiscard]] Tensor<T> forward([[maybe_unused]] Context& ctx,
+                                  const std::vector<Tensor<T>>& inputs) const override {
+    assert(inputs.size() == 1 && "Exp expects 1 input.");
+    auto e = inputs[0].f().exp_map(inputs[0]);
+    ctx.save_for_backward(e);
+    return e;
+  }
+
+  [[nodiscard]] std::vector<Tensor<T>> backward([[maybe_unused]] const Context& ctx,
+                                                const Tensor<T>& grad) const override {
+    auto saved = std::any_cast<Tensor<T>>(ctx.saved_values()[0]);
+    return {grad.f().mul_zip(grad, saved)};
   }
 
  private:

@@ -3,11 +3,13 @@ add_library(nn
   nn/sequential.hpp
   nn/modules/linear.hpp
   nn/modules/sigmoid.hpp
+  nn/modules/softmax.hpp
   nn/modules/relu.hpp
   nn/optim/sgd.hpp
-  nn/mse.hpp
+  nn/loss/loss.hpp
   nn/dataset/dataset.hpp
   nn/dataset/mnist_dataset.hpp
+  nn/all.hpp
 
   tensor/tensor.hpp
   tensor/tensor_data.hpp

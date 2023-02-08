@@ -254,6 +254,11 @@ Tensor<T> operator==(const Tensor<T>& lhs, const Tensor<T>& rhs) {
 }
 
 template <typename T>
+Tensor<T> is_close(const Tensor<T>& lhs, const Tensor<T>& rhs) {
+  return lhs.f().is_close_zip(lhs, rhs);
+}
+
+template <typename T>
 Tensor<T> sum(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
   if (!dim) {
     return Sum<T>()(t.contiguous().view({t.size()}), Tensor<T>::make(0));
@@ -272,6 +277,15 @@ Tensor<T> mean(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt
 }
 
 template <typename T>
+Tensor<T> all(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
+  if (!dim) {
+    return t.f().all_reduce(t.contiguous().view({t.size()}), 0);
+  } else {
+    return t.f().all_reduce(t, *dim);
+  }
+}
+
+template <typename T>
 Tensor<T> relu(const Tensor<T>& t) {
   return ReLU<T>()(t);
 }
@@ -279,6 +293,12 @@ Tensor<T> relu(const Tensor<T>& t) {
 template <typename T>
 Tensor<T> sigmoid(const Tensor<T>& t) {
   return Sigmoid<T>()(t);
+}
+
+template <typename T>
+Tensor<T> softmax(const Tensor<T>& t, std::size_t dim) {
+  auto e = Exp<T>()(t);
+  return e / sum(e, dim);
 }
 
 template <typename T>
@@ -322,7 +342,8 @@ template <typename T, typename It>
 }
 
 template <typename T>
-[[nodiscard]] Tensor<T> argmax(const Tensor<T>& input, std::optional<std::size_t> dim = std::nullopt) {
+[[nodiscard]] Tensor<T> argmax(const Tensor<T>& input,
+                               std::optional<std::size_t> dim = std::nullopt) {
   if (!dim) {
     return input.f().argmax_reduce(input.contiguous().view({input.size()}), 0);
   } else {

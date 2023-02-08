@@ -94,6 +94,15 @@ class TensorBackend {
     return out;
   }
 
+  void exp_map_out(const Tensor<T>& t, Tensor<T>& out) const {
+    ops_->map([](auto x) { return std::exp(x); })(t, out);
+  }
+  [[nodiscard]] Tensor<T> exp_map(const Tensor<T>& t) const {
+    auto out = Tensor<T>::zeros(t.shape(), t.f());
+    exp_map_out(t, out);
+    return out;
+  }
+
   void sigmoid_map_out(const Tensor<T>& t, Tensor<T>& out) const {
     ops_->map([](auto x) {
       // This apparently has better numerical stability
@@ -142,6 +151,17 @@ class TensorBackend {
     return out;
   }
 
+  void is_close_zip_out(const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) const {
+    return ops_->zip([](auto l, auto r) { return std::abs(l - r) <= 1e-5 + 1e-4 * std::abs(r); })(
+        lhs, rhs, out);
+  }
+  [[nodiscard]] Tensor<T> is_close_zip(const Tensor<T>& lhs, const Tensor<T>& rhs) const {
+    auto shape = broadcast_shapes(lhs.shape(), rhs.shape());
+    auto out = Tensor<T>::zeros(shape, lhs.f());
+    is_close_zip_out(lhs, rhs, out);
+    return out;
+  }
+
   void inv_back_zip_out(const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) const {
     return ops_->zip([](auto x, auto d) { return -d / (x * x); })(lhs, rhs, out);
   }
@@ -172,6 +192,17 @@ class TensorBackend {
     shape[dim] = 1;
     auto out = Tensor<T>::zeros(shape, t.f());
     mul_reduce_out(t, dim, out);
+    return out;
+  }
+
+  void all_reduce_out(const Tensor<T>& t, std::size_t dim, Tensor<T>& out) const {
+    return ops_->reduce(std::logical_and(), 1)(t, dim, out);
+  }
+  [[nodiscard]] Tensor<T> all_reduce(const Tensor<T>& t, std::size_t dim) const {
+    auto shape = t.shape();
+    shape[dim] = 1;
+    auto out = Tensor<T>::zeros(shape, t.f());
+    all_reduce_out(t, dim, out);
     return out;
   }
 
