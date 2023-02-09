@@ -3,6 +3,8 @@
 #include <memory>
 #include <tensor/tensor_util.hpp>
 
+namespace tensor {
+
 template <typename T>
 class Function {
  protected:
@@ -88,7 +90,7 @@ class View : public Function<T> {
     auto& saved = ctx.saved_values();
     Shape shape = std::any_cast<Shape>(saved[0]);
     auto data = grad.data()->view(shape);
-    return {Tensor<T>(std::move(data), grad.f()), Tensor<T>::make(0)};
+    return {Tensor<T>(std::move(data), grad.f()), tensor::make<T>(0)};
   }
 
  private:
@@ -166,7 +168,7 @@ class Unsqueeze : public Function<T> {
     shape.erase(shape.begin() + dim);
     strides.erase(strides.begin() + dim);
     auto data = grad.data()->view(shape, strides);
-    return {Tensor<T>(std::move(data), grad.f()), Tensor<T>::make(0)};
+    return {Tensor<T>(std::move(data), grad.f()), tensor::make<T>(0)};
   }
 
  private:
@@ -239,7 +241,7 @@ class ReLU : public Function<T> {
   [[nodiscard]] std::vector<Tensor<T>> backward([[maybe_unused]] const Context& ctx,
                                                 const Tensor<T>& grad) const override {
     auto saved = std::any_cast<Tensor<T>>(ctx.saved_values()[0]);
-    auto ones = Tensor<T>::ones(saved.shape(), saved.f());
+    auto ones = tensor::ones<T>(saved.shape(), saved.f());
     return {grad.f().mul_zip(grad, grad.f().relu_map(ones))};
   }
 
@@ -293,7 +295,7 @@ class Sigmoid : public Function<T> {
     auto saved = std::any_cast<Tensor<T>>(ctx.saved_values()[0]);
     auto& f = grad.f();
     auto sigmoid = f.sigmoid_map(saved);
-    auto sigmoid_deriv = f.mul_zip(sigmoid, f.add_zip(Tensor<T>::make(1), f.neg_map(sigmoid)));
+    auto sigmoid_deriv = f.mul_zip(sigmoid, f.add_zip(tensor::make<T>(1), f.neg_map(sigmoid)));
     return {f.mul_zip(grad, sigmoid_deriv)};
   }
 
@@ -368,7 +370,7 @@ class Sum : public Function<T> {
 
   [[nodiscard]] std::vector<Tensor<T>> backward([[maybe_unused]] const Context& ctx,
                                                 const Tensor<T>& grad) const override {
-    return {grad, Tensor<T>::make(0)};
+    return {grad, tensor::make<T>(0)};
   }
 
  private:
@@ -393,7 +395,8 @@ class MatMul : public Function<T> {
   [[nodiscard]] std::vector<Tensor<T>> backward([[maybe_unused]] const Context& ctx,
                                                 const Tensor<T>& grad) const override {
     auto lhs = std::any_cast<Tensor<T>>(ctx.saved_values()[0]);
-    auto rhs = std::any_cast<Tensor<T>>(ctx.saved_values()[1]);;
+    auto rhs = std::any_cast<Tensor<T>>(ctx.saved_values()[1]);
+    ;
 
     auto transpose = [](const Tensor<T>& t) {
       auto ndims = t.ndims();
@@ -418,3 +421,5 @@ class MatMul : public Function<T> {
     return std::make_unique<decltype(fn)>(std::move(fn));
   }
 };
+
+}  // namespace tensor

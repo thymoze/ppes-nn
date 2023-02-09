@@ -14,6 +14,8 @@ namespace fs = std::filesystem;
 
 namespace nn {
 
+using namespace tensor;
+
 /// @brief A dataset wrapper for the MNIST Database: http://yann.lecun.com/exdb/mnist/
 template <typename T>
 class MnistDataset : public Dataset<Tensor<T>, Tensor<T>> {
@@ -60,10 +62,10 @@ class MnistDataset : public Dataset<Tensor<T>, Tensor<T>> {
       return std::pair(images_[idx], labels_[idx]);
     } else {
       auto imgs = stack<T>(images_.begin() + (idx * batch_size_),
-                        std::min(images_.begin() + ((idx + 1) * batch_size_), images_.end()));
+                           std::min(images_.begin() + ((idx + 1) * batch_size_), images_.end()));
 
       auto lbls = stack<T>(labels_.begin() + (idx * batch_size_),
-                        std::min(labels_.begin() + ((idx + 1) * batch_size_), labels_.end()));
+                           std::min(labels_.begin() + ((idx + 1) * batch_size_), labels_.end()));
 
       return std::pair(imgs, lbls);
     }
@@ -118,7 +120,7 @@ class MnistDataset : public Dataset<Tensor<T>, Tensor<T>> {
         data.push_back(static_cast<T>(byte));
       }
 
-      result.emplace_back(Tensor<T>::make({size, size}, std::move(data)));
+      result.emplace_back(tensor::make<T>({size, size}, std::move(data)));
     }
 
     return result;

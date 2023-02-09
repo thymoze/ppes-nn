@@ -1,7 +1,7 @@
 #include <iostream>
+#include <nn/all.hpp>
 #include <string>
 #include <utility>
-#include <nn/all.hpp>
 
 #include "../trained_models/xor.hpp"
 
@@ -22,7 +22,7 @@ int main(void) {
     std::getline(std::cin, input);
     float second = std::stoi(input);
 
-    auto in = Tensor<double>::make({1, 2}, {first, second});
+    auto in = tensor::make<double>({1, 2}, {first, second});
     auto out = model(in);
 
     std::cout << "Output: " << out.item() << std::endl;

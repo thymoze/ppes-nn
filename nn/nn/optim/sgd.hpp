@@ -10,7 +10,7 @@ template <typename T>
 class SGD {
  public:
   SGD(const std::vector<Parameter<T>>& parameters, double learning_rate = 0.01)
-      : params_(parameters), learning_rate_(Tensor<T>::make(static_cast<T>(learning_rate))) {}
+      : params_(parameters), learning_rate_(tensor::make<T>(learning_rate)) {}
 
   void step() {
     for (auto& param : params_) {

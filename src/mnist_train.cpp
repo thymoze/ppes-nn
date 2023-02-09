@@ -4,6 +4,8 @@
 #include <nn/dataset/mnist_dataset.hpp>
 #include <vector>
 
+using tensor::Tensor;
+
 int main() {
   nn::random::seed(0x5EED);
 
@@ -17,7 +19,7 @@ int main() {
 
   auto optimizer = nn::SGD<double>(model.params(), 0.01);
 
-  for (int epoch = 0; epoch < 1; epoch++) {
+  for (int epoch = 0; epoch < 5; epoch++) {
     double epoch_loss = 0;
     int i = 0;
     for (auto&& [input, target] : mnist) {
@@ -26,10 +28,11 @@ int main() {
       auto in = input.view({input.shape()[0], 28 * 28});
       auto output_onehot = model(in);
 
-      auto output = argmax(output_onehot, 1);
-      auto batch_correct = mean(output.view({input.shape()[0]}) == target.view({input.shape()[0]}));
+      auto output = tensor::argmax(output_onehot, 1);
+      auto batch_correct =
+          tensor::mean(output.view({input.shape()[0]}) == target.view({input.shape()[0]}));
 
-      auto target_onehot = Tensor<double>::zeros({input.shape()[0], 10});
+      auto target_onehot = tensor::zeros<double>({input.shape()[0], 10});
       for (std::size_t d = 0; d < input.shape()[0]; ++d) {
         target_onehot(d, static_cast<std::size_t>(target(d, 0, 0))) = 1;
       }
@@ -47,9 +50,7 @@ int main() {
     std::cout << "\33[2K\r";
     epoch_loss = epoch_loss / mnist.size();
 
-    if (epoch % 100 == 0) {
-      std::cout << "Epoch " << epoch << ": Loss = " << epoch_loss << std::endl;
-    }
+    std::cout << "Epoch " << epoch << ": Loss = " << epoch_loss << std::endl;
   }
   model.save("../../trained_models/mnist.hpp", "mnist_model");
 
@@ -62,8 +63,9 @@ int main() {
     auto in = input.view({input.shape()[0], 28 * 28});
     auto output_onehot = model(in);
 
-    auto output = argmax(output_onehot, 1);
-    correct += sum(output.view({input.shape()[0]}) == target.view({input.shape()[0]})).item();
+    auto output = tensor::argmax(output_onehot, 1);
+    correct +=
+        tensor::sum(output.view({input.shape()[0]}) == target.view({input.shape()[0]})).item();
   }
   correct /= test.count();
   std::cout << "Test accuracy = " << correct << std::endl;

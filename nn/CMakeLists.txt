@@ -17,13 +17,6 @@ add_library(nn
   tensor/tensor_functions.hpp
   tensor/tensor_util.hpp
   tensor/autodiff.hpp
-
-  matrix/matrix.hpp
-  matrix/ops.hpp
-
-  autograd/autograd.hpp
-  autograd/functions.hpp
-  autograd/variable.hpp
 )
 
 target_include_directories(nn

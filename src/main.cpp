@@ -1,12 +1,14 @@
 #include <iostream>
 #include <nn/all.hpp>
 
+using tensor::Tensor;
+
 int main() {
   nn::random::seed(0x5EED);
 
   std::pair<Tensor<double>, Tensor<double>> xor_data = {
-      Tensor<double>::make({4, 1, 2}, {0, 0, 1, 1, 1, 0, 0, 1}),
-      Tensor<double>::make({4, 1, 1}, {   0,    0,    1,    1}),
+      tensor::make<double>({4, 1, 2}, {0, 0, 1, 1, 1, 0, 0, 1}),
+      tensor::make<double>({4, 1, 1}, {0, 0, 1, 1}),
   };
 
   auto model = nn::Sequential<double>();

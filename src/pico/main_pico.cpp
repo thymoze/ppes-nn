@@ -3,8 +3,8 @@
 #define DEFAULT_TENSOR_BACKEND TensorBackend<T>(SimpleOps<T>())
 
 #include <iostream>
-#include <string>
 #include <nn/all.hpp>
+#include <string>
 
 #include "../../trained_models/xor.hpp"
 
@@ -27,7 +27,7 @@ int main(void) {
     std::getline(std::cin, input, '\r');
     double second = std::stoi(input);
 
-    auto in = Tensor<double>::make({1, 2}, {first, second});
+    auto in = tensor::make<double>({1, 2}, {first, second});
     auto out = model(in);
 
     std::cout << "Output: " << out.item() << std::endl;

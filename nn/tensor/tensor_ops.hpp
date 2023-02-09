@@ -10,6 +10,8 @@
 #include <string>
 #include <tensor/tensor_util.hpp>
 
+namespace tensor {
+
 Shape broadcast_shapes(const Shape& lhs, const Shape& rhs) {
   Shape shape;
   auto size = std::max(lhs.size(), rhs.size());
@@ -62,7 +64,7 @@ class TensorBackend {
   // map
   void neg_map_out(const Tensor<T>& t, Tensor<T>& out) const { ops_->map(std::negate())(t, out); }
   [[nodiscard]] Tensor<T> neg_map(const Tensor<T>& t) const {
-    auto out = Tensor<T>::zeros(t.shape(), t.f());
+    auto out = tensor::zeros<T>(t.shape(), t.f());
     neg_map_out(t, out);
     return out;
   }
@@ -71,7 +73,7 @@ class TensorBackend {
     return ops_->map(std::identity())(t, out);
   }
   [[nodiscard]] Tensor<T> id_map(const Tensor<T>& t) const {
-    auto out = Tensor<T>::zeros(t.shape(), t.f());
+    auto out = tensor::zeros<T>(t.shape(), t.f());
     id_map_out(t, out);
     return out;
   }
@@ -80,7 +82,7 @@ class TensorBackend {
     ops_->map([](auto x) { return 1 / x; })(t, out);
   }
   [[nodiscard]] Tensor<T> inv_map(const Tensor<T>& t) const {
-    auto out = Tensor<T>::zeros(t.shape(), t.f());
+    auto out = tensor::zeros<T>(t.shape(), t.f());
     inv_map_out(t, out);
     return out;
   }
@@ -89,7 +91,7 @@ class TensorBackend {
     ops_->map([](auto x) { return x > 0 ? x : 0; })(t, out);
   }
   [[nodiscard]] Tensor<T> relu_map(const Tensor<T>& t) const {
-    auto out = Tensor<T>::zeros(t.shape(), t.f());
+    auto out = tensor::zeros<T>(t.shape(), t.f());
     relu_map_out(t, out);
     return out;
   }
@@ -98,7 +100,7 @@ class TensorBackend {
     ops_->map([](auto x) { return std::exp(x); })(t, out);
   }
   [[nodiscard]] Tensor<T> exp_map(const Tensor<T>& t) const {
-    auto out = Tensor<T>::zeros(t.shape(), t.f());
+    auto out = tensor::zeros<T>(t.shape(), t.f());
     exp_map_out(t, out);
     return out;
   }
@@ -115,7 +117,7 @@ class TensorBackend {
     })(t, out);
   }
   [[nodiscard]] Tensor<T> sigmoid_map(const Tensor<T>& t) const {
-    auto out = Tensor<T>::zeros(t.shape(), t.f());
+    auto out = tensor::zeros<T>(t.shape(), t.f());
     sigmoid_map_out(t, out);
     return out;
   }
@@ -126,7 +128,7 @@ class TensorBackend {
   }
   [[nodiscard]] Tensor<T> add_zip(const Tensor<T>& lhs, const Tensor<T>& rhs) const {
     auto shape = broadcast_shapes(lhs.shape(), rhs.shape());
-    auto out = Tensor<T>::zeros(shape, lhs.f());
+    auto out = tensor::zeros<T>(shape, lhs.f());
     add_zip_out(lhs, rhs, out);
     return out;
   }
@@ -136,7 +138,7 @@ class TensorBackend {
   }
   [[nodiscard]] Tensor<T> mul_zip(const Tensor<T>& lhs, const Tensor<T>& rhs) const {
     auto shape = broadcast_shapes(lhs.shape(), rhs.shape());
-    auto out = Tensor<T>::zeros(shape, lhs.f());
+    auto out = tensor::zeros<T>(shape, lhs.f());
     mul_zip_out(lhs, rhs, out);
     return out;
   }
@@ -146,7 +148,7 @@ class TensorBackend {
   }
   [[nodiscard]] Tensor<T> eq_zip(const Tensor<T>& lhs, const Tensor<T>& rhs) const {
     auto shape = broadcast_shapes(lhs.shape(), rhs.shape());
-    auto out = Tensor<T>::zeros(shape, lhs.f());
+    auto out = tensor::zeros<T>(shape, lhs.f());
     eq_zip_out(lhs, rhs, out);
     return out;
   }
@@ -157,7 +159,7 @@ class TensorBackend {
   }
   [[nodiscard]] Tensor<T> is_close_zip(const Tensor<T>& lhs, const Tensor<T>& rhs) const {
     auto shape = broadcast_shapes(lhs.shape(), rhs.shape());
-    auto out = Tensor<T>::zeros(shape, lhs.f());
+    auto out = tensor::zeros<T>(shape, lhs.f());
     is_close_zip_out(lhs, rhs, out);
     return out;
   }
@@ -167,7 +169,7 @@ class TensorBackend {
   }
   [[nodiscard]] Tensor<T> inv_back_zip(const Tensor<T>& lhs, const Tensor<T>& rhs) const {
     auto shape = broadcast_shapes(lhs.shape(), rhs.shape());
-    auto out = Tensor<T>::zeros(shape, lhs.f());
+    auto out = tensor::zeros<T>(shape, lhs.f());
     inv_back_zip_out(lhs, rhs, out);
     return out;
   }
@@ -179,7 +181,7 @@ class TensorBackend {
   [[nodiscard]] Tensor<T> add_reduce(const Tensor<T>& t, std::size_t dim) const {
     auto shape = t.shape();
     shape[dim] = 1;
-    auto out = Tensor<T>::zeros(shape, t.f());
+    auto out = tensor::zeros<T>(shape, t.f());
     add_reduce_out(t, dim, out);
     return out;
   }
@@ -190,7 +192,7 @@ class TensorBackend {
   [[nodiscard]] Tensor<T> mul_reduce(const Tensor<T>& t, std::size_t dim) const {
     auto shape = t.shape();
     shape[dim] = 1;
-    auto out = Tensor<T>::zeros(shape, t.f());
+    auto out = tensor::zeros<T>(shape, t.f());
     mul_reduce_out(t, dim, out);
     return out;
   }
@@ -201,7 +203,7 @@ class TensorBackend {
   [[nodiscard]] Tensor<T> all_reduce(const Tensor<T>& t, std::size_t dim) const {
     auto shape = t.shape();
     shape[dim] = 1;
-    auto out = Tensor<T>::zeros(shape, t.f());
+    auto out = tensor::zeros<T>(shape, t.f());
     all_reduce_out(t, dim, out);
     return out;
   }
@@ -212,7 +214,7 @@ class TensorBackend {
   [[nodiscard]] Tensor<T> max_reduce(const Tensor<T>& t, std::size_t dim) const {
     auto shape = t.shape();
     shape[dim] = 1;
-    auto out = Tensor<T>::zeros(shape, t.f());
+    auto out = tensor::zeros<T>(shape, t.f());
     max_reduce_out(t, dim, out);
     return out;
   }
@@ -227,7 +229,7 @@ class TensorBackend {
   [[nodiscard]] Tensor<T> argmax_reduce(const Tensor<T>& t, std::size_t dim) const {
     auto shape = t.shape();
     shape[dim] = 1;
-    auto out = Tensor<T>::zeros(shape, t.f());
+    auto out = tensor::zeros<T>(shape, t.f());
     argmax_reduce_out(t, dim, out);
     return out;
   }
@@ -250,7 +252,7 @@ class TensorBackend {
     shape.push_back(*(a.shape().end() - 2));
     shape.push_back(*(b.shape().end() - 1));
 
-    auto out = Tensor<T>::zeros(shape, a.f());
+    auto out = tensor::zeros<T>(shape, a.f());
     ops_->matrix_multiply(lhs, rhs, out);
 
     if (both_2d) {
@@ -379,3 +381,5 @@ class MTOps : public SimpleOps<T> {
     }
   }
 };
+
+}  // namespace tensor

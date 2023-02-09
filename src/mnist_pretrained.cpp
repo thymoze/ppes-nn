@@ -5,7 +5,9 @@
 
 #include "../trained_models/mnist.hpp"
 
-Tensor<double> input = Tensor<double>::make(
+using tensor::Tensor;
+
+Tensor<double> input = tensor::make<double>(
     {1, 28 * 28},
     {0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
      0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -67,7 +69,7 @@ int main(void) {
   std::cout << "Running inference" << std::endl;
   auto out = model(input);
 
-  auto output = argmax(out, 1);
+  auto output = tensor::argmax(out, 1);
 
   std::cout << "Output: " << output.item() << std::endl;
 }

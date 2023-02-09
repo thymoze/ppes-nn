@@ -4,10 +4,12 @@
 
 namespace nn {
 
+using tensor::Tensor;
+
 template <typename T>
 Tensor<T> mse(const Tensor<T>& pred, const Tensor<T>& target) {
   auto diff = target - pred;
-  return mean(diff * diff);
+  return tensor::mean(diff * diff);
 }
 
 }  // namespace nn

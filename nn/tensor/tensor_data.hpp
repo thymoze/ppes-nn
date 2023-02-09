@@ -6,8 +6,13 @@
 #include <memory>
 #include <numeric>
 #include <string>
-#include <tensor/tensor_util.hpp>
 #include <utility>
+
+namespace tensor {
+
+using Strides = std::vector<std::size_t>;
+using Shape = std::vector<std::size_t>;
+using Indices = std::vector<std::size_t>;
 
 void to_index(int ord, const Shape& shape, Indices& out_index) {
   out_index.clear();
@@ -175,26 +180,26 @@ class TensorStorage : public TensorData<T> {
       : TensorStorage{std::move(data), shape_to_strides(shape), std::move(shape)} {}
   explicit TensorStorage(DataPtr data, Strides strides, Shape shape);
 
-  [[nodiscard]] virtual TensorData<T>::ref at(std::size_t pos) override;
-  [[nodiscard]] virtual TensorData<T>::const_ref at(std::size_t pos) const override;
+  [[nodiscard]] TensorData<T>::ref at(std::size_t pos) override;
+  [[nodiscard]] TensorData<T>::const_ref at(std::size_t pos) const override;
 
-  [[nodiscard]] virtual TensorData<T>::ref get(const Indices& indices) override;
-  [[nodiscard]] virtual TensorData<T>::const_ref get(const Indices& indices) const override;
+  [[nodiscard]] TensorData<T>::ref get(const Indices& indices) override;
+  [[nodiscard]] TensorData<T>::const_ref get(const Indices& indices) const override;
 
-  [[nodiscard]] virtual TensorData<T>::ptr begin() override;
-  [[nodiscard]] virtual TensorData<T>::ptr end() override;
-  [[nodiscard]] virtual TensorData<T>::const_ptr begin() const override;
-  [[nodiscard]] virtual TensorData<T>::const_ptr end() const override;
+  [[nodiscard]] TensorData<T>::ptr begin() override;
+  [[nodiscard]] TensorData<T>::ptr end() override;
+  [[nodiscard]] TensorData<T>::const_ptr begin() const override;
+  [[nodiscard]] TensorData<T>::const_ptr end() const override;
 
-  [[nodiscard]] virtual std::size_t size() const override { return std::size(*data_); }
+  [[nodiscard]] std::size_t size() const override { return std::size(*data_); }
 
-  [[nodiscard]] virtual std::unique_ptr<TensorData<T>> clone() const override;
-  [[nodiscard]] virtual std::unique_ptr<TensorData<T>> permute(const Shape& order) const override;
-  [[nodiscard]] virtual std::unique_ptr<TensorData<T>> view(const Shape& shape) const override;
-  [[nodiscard]] virtual std::unique_ptr<TensorData<T>> view(const Shape& shape,
-                                                            const Strides& strides) const override;
+  [[nodiscard]] std::unique_ptr<TensorData<T>> clone() const override;
+  [[nodiscard]] std::unique_ptr<TensorData<T>> permute(const Shape& order) const override;
+  [[nodiscard]] std::unique_ptr<TensorData<T>> view(const Shape& shape) const override;
+  [[nodiscard]] std::unique_ptr<TensorData<T>> view(const Shape& shape,
+                                                    const Strides& strides) const override;
 
-  [[nodiscard]] virtual std::string to_string() const override;
+  [[nodiscard]] std::string to_string() const override;
 
  private:
   DataPtr data_;
@@ -236,7 +241,8 @@ std::unique_ptr<TensorData<T>> TensorStorage<T, S>::view(const Shape& shape) con
 }
 
 template <typename T, typename S>
-std::unique_ptr<TensorData<T>> TensorStorage<T, S>::view(const Shape& shape, const Strides& strides) const {
+std::unique_ptr<TensorData<T>> TensorStorage<T, S>::view(const Shape& shape,
+                                                         const Strides& strides) const {
   return std::make_unique<TensorStorage<T, S>>(data_, strides, shape);
 }
 
@@ -261,22 +267,22 @@ typename TensorData<T>::const_ref TensorStorage<T, S>::get(const Indices& indice
 }
 
 template <typename T, typename S>
-[[nodiscard]] TensorData<T>::ptr TensorStorage<T, S>::begin() {
+[[nodiscard]] typename TensorData<T>::ptr TensorStorage<T, S>::begin() {
   return const_cast<TensorData<T>::ptr>(std::as_const(*this).begin());
 }
 
 template <typename T, typename S>
-[[nodiscard]] TensorData<T>::ptr TensorStorage<T, S>::end() {
+[[nodiscard]] typename TensorData<T>::ptr TensorStorage<T, S>::end() {
   return const_cast<TensorData<T>::ptr>(std::as_const(*this).end());
 }
 
 template <typename T, typename S>
-[[nodiscard]] TensorData<T>::const_ptr TensorStorage<T, S>::begin() const {
+[[nodiscard]] typename TensorData<T>::const_ptr TensorStorage<T, S>::begin() const {
   return &this->at(0);
 }
 
 template <typename T, typename S>
-[[nodiscard]] TensorData<T>::const_ptr TensorStorage<T, S>::end() const {
+[[nodiscard]] typename TensorData<T>::const_ptr TensorStorage<T, S>::end() const {
   return &this->at(this->size());
 }
 
@@ -311,3 +317,5 @@ std::string TensorStorage<T, S>::to_string() const {
   }
   return res.str();
 }
+
+}  // namespace tensor

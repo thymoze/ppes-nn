@@ -7,10 +7,9 @@
 #include <tensor/tensor_data.hpp>
 #include <tensor/tensor_functions.hpp>
 #include <tensor/tensor_ops.hpp>
+#include <tensor/tensor_util.hpp>
 
-#ifndef DEFAULT_TENSOR_BACKEND
-#define DEFAULT_TENSOR_BACKEND TensorBackend<T>(MTOps<T>())
-#endif
+namespace tensor {
 
 template <typename T>
 class Tensor {
@@ -45,53 +44,6 @@ class Tensor {
       : data_(std::move(t.data_)),
         backend_(std::move(t.backend_)),
         history_(std::make_shared<History<T>>(std::move(history))) {}
-
-  static Tensor<T> make(T val) { return Tensor<T>::make({1}, {val}); }
-  static Tensor<T> make(std::vector<T> data) {
-    return Tensor<T>::make({data.size()}, std::move(data));
-  }
-  static Tensor<T> make(Shape shape, std::vector<T>&& buffer) {
-    auto backend = DEFAULT_TENSOR_BACKEND;
-    return Tensor<T>::make(std::move(shape), std::move(buffer), std::move(backend));
-  }
-  static Tensor<T> make(Shape shape, std::vector<T>&& buffer, TensorBackend<T> backend) {
-    auto data =
-        TensorStorage<T>(std::make_shared<std::vector<T>>(std::move(buffer)), std::move(shape));
-    return Tensor<T>(std::move(data), std::move(backend));
-  }
-  static Tensor<T> zeros(Shape shape) {
-    auto backend = DEFAULT_TENSOR_BACKEND;
-    return Tensor<T>::zeros(std::move(shape), std::move(backend));
-  }
-  static Tensor<T> zeros(Shape shape, TensorBackend<T> backend) {
-    auto size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies());
-    auto data = TensorStorage<T>(std::make_shared<std::vector<T>>(size, 0), std::move(shape));
-
-    return Tensor<T>(std::move(data), std::move(backend));
-  }
-  static Tensor<T> ones(Shape shape) {
-    auto backend = DEFAULT_TENSOR_BACKEND;
-    return Tensor<T>::zeros(std::move(shape), std::move(backend));
-  }
-  static Tensor<T> ones(Shape shape, TensorBackend<T> backend) {
-    auto size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies());
-    auto data = TensorStorage<T>(std::make_shared<std::vector<T>>(size, 1), std::move(shape));
-
-    return Tensor<T>(std::move(data), std::move(backend));
-  }
-  static Tensor<T> rand(Shape shape, T low, T hi) {
-    auto backend = DEFAULT_TENSOR_BACKEND;
-    return Tensor<T>::rand(std::move(shape), std::move(backend), low, hi);
-  }
-  static Tensor<T> rand(Shape shape, TensorBackend<T> backend, T low, T hi) {
-    auto size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies());
-    std::vector<T> data(size);
-    std::generate(data.begin(), data.end(), [&low, &hi] { return nn::random::rand(low, hi); });
-
-    auto _tensor =
-        TensorStorage<T>(std::make_shared<std::vector<T>>(std::move(data)), std::move(shape));
-    return Tensor<T>(std::move(_tensor), std::move(backend));
-  }
 
   [[nodiscard]] bool requires_grad() const { return static_cast<bool>(history_); }
 
@@ -148,7 +100,7 @@ class Tensor {
     std::vector<T> new_shape(shape.size());
     std::transform(shape.begin(), shape.end(), new_shape.begin(),
                    [](auto v) { return static_cast<T>(v); });
-    return View<T>()(*this, Tensor<T>::make(std::move(new_shape)));
+    return View<T>()(*this, tensor::make<T>(std::move(new_shape)));
   }
   [[nodiscard]] Tensor<T> reshape(const Shape& shape) const {
     if (data_.is_contiguous()) {
@@ -159,7 +111,7 @@ class Tensor {
   }
   [[nodiscard]] Tensor<T> squeeze() const { return Squeeze<T>()(*this); };
   [[nodiscard]] Tensor<T> unsqueeze(std::size_t dim) const {
-    return Unsqueeze<T>()(*this, Tensor<T>::make(static_cast<T>(dim)));
+    return Unsqueeze<T>()(*this, tensor::make<T>(static_cast<T>(dim)));
   };
 
   [[nodiscard]] const TensorData<T>* data() const { return data_.get(); }
@@ -187,7 +139,7 @@ class Tensor {
 
 template <typename T>
 void Tensor<T>::backward() {
-  auto grad = Tensor<T>::make({1}, {1}, backend_);
+  auto grad = tensor::make<T>({1}, {1}, backend_);
   backpropagate(*this, grad);
 }
 
@@ -195,7 +147,7 @@ template <typename T>
 void Tensor<T>::add_grad(const Tensor<T>& x) {
   assert(is_leaf() && "Only leaves should have derivatives.");
   if (!grad_->has_value()) {
-    *grad_ = Tensor<T>::zeros(data_->shape(), backend_);
+    *grad_ = tensor::zeros<T>(data_->shape(), backend_);
   }
   *grad_ = grad_->value() + x;
 }
@@ -225,7 +177,7 @@ Tensor<T> Tensor<T>::expand(const Tensor<T>& other) const {
 
   // Case 2: Backward is smaller, broadcast up
   auto broadcast_shape = broadcast_shapes(shape(), other.shape());
-  auto buf = Tensor<T>::zeros(broadcast_shape, backend_);
+  auto buf = tensor::zeros<T>(broadcast_shape, backend_);
   backend_.id_map_out(other, buf);
   if (ndims() == buf.ndims() && std::equal(shape().begin(), shape().end(), buf.shape().begin())) {
     return buf;
@@ -282,18 +234,18 @@ Tensor<T> is_close(const Tensor<T>& lhs, const Tensor<T>& rhs) {
 template <typename T>
 Tensor<T> sum(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
   if (!dim) {
-    return Sum<T>()(t.contiguous().view({t.size()}), Tensor<T>::make(0));
+    return Sum<T>()(t.contiguous().view({t.size()}), tensor::make<T>(0));
   } else {
-    return Sum<T>()(t, Tensor<T>::make(*dim));
+    return Sum<T>()(t, tensor::make<T>(*dim));
   }
 }
 
 template <typename T>
 Tensor<T> mean(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
   if (!dim) {
-    return sum(t, dim) / Tensor<T>::make(t.size());
+    return sum(t, dim) / tensor::make<T>(t.size());
   } else {
-    return sum(t, dim) / Tensor<T>::make(t.shape()[*dim]);
+    return sum(t, dim) / tensor::make<T>(t.shape()[*dim]);
   }
 }
 
@@ -357,8 +309,8 @@ template <typename T, typename It>
     data.insert(data.end(), t->data()->begin(), t->data()->end());
   }
 
-  auto tensor = TensorStorage<T>{std::make_shared<std::vector<T>>(std::move(data)), std::move(strides),
-                              std::move(shape)};
+  auto tensor = TensorStorage<T>{std::make_shared<std::vector<T>>(std::move(data)),
+                                 std::move(strides), std::move(shape)};
   return Tensor<T>{std::move(tensor), backend};
 }
 
@@ -371,3 +323,5 @@ template <typename T>
     return input.f().argmax_reduce(input, *dim);
   }
 }
+
+}  // namespace tensor

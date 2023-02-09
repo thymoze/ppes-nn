@@ -8,6 +8,11 @@
 #include <unordered_map>
 #include <unordered_set>
 
+namespace tensor {
+
+template <typename T>
+class Function;
+
 class Context {
  public:
   explicit Context(bool no_grad) : no_grad_(no_grad), saved_values_() {}
@@ -94,3 +99,5 @@ void backpropagate(const Tensor<T>& variable, const Tensor<T>& grad) {
     }
   }
 }
+
+}  // namespace tensor

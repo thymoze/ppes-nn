@@ -7,6 +7,8 @@
 
 namespace nn {
 
+using namespace tensor;
+
 template <typename T>
 class Sequential : public Module<T> {
  public:

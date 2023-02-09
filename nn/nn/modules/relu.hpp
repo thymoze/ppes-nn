@@ -5,6 +5,8 @@
 
 namespace nn {
 
+using namespace tensor;
+
 template <typename T>
 class ReLU : public Module<T> {
  public:

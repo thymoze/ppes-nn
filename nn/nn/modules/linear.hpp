@@ -5,6 +5,8 @@
 
 namespace nn {
 
+using namespace tensor;
+
 template <typename T, std::size_t In, std::size_t Out>
 class Linear : public Module<T> {
  public:
@@ -19,9 +21,9 @@ class Linear : public Module<T> {
 
   void init() override {
     auto bound = 1 / std::sqrt(In);
-    this->params_[0].update(Tensor<T>::rand({In, Out}, -bound, bound));
+    this->params_[0].update(tensor::rand<T>({In, Out}, -bound, bound));
     if (bias_) {
-      this->params_[1].update(Tensor<T>::rand({Out}, -bound, bound));
+      this->params_[1].update(tensor::rand<T>({Out}, -bound, bound));
     }
   }
 

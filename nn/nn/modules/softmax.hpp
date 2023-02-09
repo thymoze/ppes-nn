@@ -6,6 +6,8 @@
 
 namespace nn {
 
+using namespace tensor;
+
 template <typename T>
 class Softmax : public Module<T> {
  public:
