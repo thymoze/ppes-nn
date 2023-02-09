@@ -45,6 +45,7 @@ set_target_properties(mnist_train
 target_link_libraries(mnist_bin PRIVATE mnist_train)
 
 ADD_COMPILE_LINK_EXECUTABLE(tensor tensor.cpp)
+ADD_COMPILE_LINK_EXECUTABLE(mnist_pretrained mnist_pretrained.cpp)
 
 if(BUILD_PICO)
   add_subdirectory(pico)
