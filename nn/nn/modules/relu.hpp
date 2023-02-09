@@ -12,7 +12,9 @@ class ReLU : public Module<T> {
 
   Tensor<T> forward(const Tensor<T>& input) override { return relu(input); };
 
-  std::string save(const std::string&) override { return "nn::ReLU<T>()"; };
+  void init() override {}
+
+  unsigned int init(const unsigned char data[], const unsigned int data_len) override { return 0; }
 
  private:
 };

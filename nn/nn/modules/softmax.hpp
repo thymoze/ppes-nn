@@ -13,7 +13,9 @@ class Softmax : public Module<T> {
 
   Tensor<T> forward(const Tensor<T>& input) override { return softmax(input, dim_); };
 
-  std::string save(const std::string&) override { return "nn::Softmax<T>()"; };
+  void init() override {}
+
+  unsigned int init(const unsigned char data[], const unsigned int data_len) override { return 0; }
 
  private:
   std::optional<std::size_t> dim_;

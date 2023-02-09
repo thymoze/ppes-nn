@@ -23,45 +23,26 @@ class Sequential : public Module<T> {
     this->params_.insert(this->params_.end(), module->params().begin(), module->params().end());
   }
 
+  void init() override {
+    for (auto& module : modules_) {
+      module->init();
+    }
+  }
+
+  unsigned int init(const unsigned char data[], const unsigned int data_len) override {
+    unsigned int offset = 0;
+    for (auto& module : modules_) {
+      offset += module->init(data + offset, data_len - offset);
+    }
+    return offset;
+  }
+
   Tensor<T> forward(const Tensor<T>& inputs) override {
     auto out = inputs;
     for (auto& module : modules_) {
       out = module->forward(out);
     }
     return out;
-  };
-
-  std::string save(const std::string& model_name) override {
-    std::string code =
-        "#pragma once\n\n"
-        "#include <nn/modules/linear.hpp>\n"
-        "#include <nn/modules/relu.hpp>\n"
-        "#include <nn/modules/sigmoid.hpp>\n"
-        "#include <nn/sequential.hpp>\n\n"
-        "template <typename T>"
-        "class " +
-        model_name +
-        " {\n"
-        "public:\n"
-        " static nn::Sequential<T> create()\n"
-        " {\n"
-        "   auto model = nn::Sequential<T>();\n";
-
-    for (auto& m : modules_) {
-      code += "   model.add(" + m->save(model_name) + ");\n";
-    }
-    code +=
-        "   return model;\n"
-        " }\n"
-        "};\n";
-
-    std::string dest = "../trained_models/" + model_name + ".hpp";
-    std::ofstream dest_file;
-    dest_file.open(dest);
-    dest_file << code;
-    dest_file.close();
-    std::cout << "saved to " << dest << std::endl;
-    return code;
   };
 
  private:

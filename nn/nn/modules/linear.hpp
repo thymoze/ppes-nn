@@ -5,31 +5,47 @@
 
 namespace nn {
 
-template <typename T>
+template <typename T, std::size_t In, std::size_t Out>
 class Linear : public Module<T> {
  public:
-  Linear(std::size_t input_size, std::size_t output_size, bool bias = true)
-      : num_in_(input_size), num_out_(output_size), bias_(bias) {
-    auto bound = 1 / std::sqrt(input_size);
-
-    auto weights = Tensor<T>::rand({num_in_, num_out_}, -bound, bound);
+  Linear() : Linear(true) {}
+  Linear(bool bias) : bias_(bias) {
+    this->params_ = {Parameter<T>()};
 
     if (bias) {
-      auto bias_weights = Tensor<T>::rand({num_out_}, -bound, bound);
-      this->params_ = {Parameter<T>(std::move(weights)), Parameter<T>(std::move(bias_weights))};
-    } else {
-      this->params_ = {Parameter<T>(std::move(weights))};
+      this->params_.emplace_back();
     }
   }
 
-  // Linear(Tensor<T> weights, Tensor<T> bias_weights)
-  //     : num_in_(weights.rows()), num_out_(weights.cols()), bias_(true) {
-  //   this->params_ = {Parameter<T>(std::move(weights)), Parameter<T>(std::move(bias_weights))};
-  // }
+  void init() override {
+    auto bound = 1 / std::sqrt(In);
+    this->params_[0].update(Tensor<T>::rand({In, Out}, -bound, bound));
+    if (bias_) {
+      this->params_[1].update(Tensor<T>::rand({Out}, -bound, bound));
+    }
+  }
 
-  // Linear(Tensor<T> weights) : num_in_(weights.rows()), num_out_(weights.cols()), bias_(false) {
-  //   this->params_ = {Parameter<T>(std::move(weights))};
-  // }
+  unsigned int init(const unsigned char data[], const unsigned int data_len) override {
+    unsigned int size = (In * Out + (bias_ ? Out : 0)) * sizeof(T);
+    if (size > data_len) {
+      throw std::logic_error("Cannot initialize module of size " + std::to_string(size) +
+                             " with array of length " + std::to_string(data_len));
+    }
+
+    using WDataPtr = const T(*)[In * Out];
+    WDataPtr w_arr = reinterpret_cast<WDataPtr>(data);
+    auto w_storage = TensorStorage<T, WDataPtr>(w_arr, {In, Out});
+    this->params_[0].update(Tensor<T>(std::move(w_storage)));
+
+    if (bias_) {
+      using BDataPtr = const T(*)[Out];
+      BDataPtr b_arr = reinterpret_cast<BDataPtr>(data + sizeof(*w_arr));
+      auto b_storage = TensorStorage<T, BDataPtr>(b_arr, {Out});
+      this->params_[1].update(Tensor<T>(std::move(b_storage)));
+    }
+
+    return size;
+  }
 
   Tensor<T> forward(const Tensor<T>& input) override {
     auto weights = this->params_[0];
@@ -41,34 +57,7 @@ class Linear : public Module<T> {
     return x;
   }
 
-  std::string save(const std::string&) override{
-      // auto weights = this->params_[0];
-      // auto bias_weights = this->params_[1];
-      // std::string code = std::string("nn::Linear<T>(nn::Matrix<T>{") +
-      //                    std::to_string(weights.rows()) + std::string(", ") +
-      //                    std::to_string(weights.cols()) + std::string(", {");
-      // for (auto val : weights.value()) {
-      //   code += std::to_string(val) + ", ";
-      // }
-      // code.pop_back();
-      // code.pop_back();
-
-      // code += "}}, nn::Matrix<T>{" + std::to_string(bias_weights.rows()) + std::string(", ") +
-      //         std::to_string(bias_weights.cols()) + std::string(", {");
-
-      // for (auto val : bias_weights.value()) {
-      //   code += std::to_string(val) + ", ";
-      // }
-      // code.pop_back();
-      // code.pop_back();
-
-      // code += "}})";
-      // return code;
-  };
-
  private:
-  Linear() = default;
-
   std::size_t num_in_;
   std::size_t num_out_;
   bool bias_;

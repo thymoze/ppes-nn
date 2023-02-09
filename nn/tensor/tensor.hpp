@@ -8,16 +8,37 @@
 #include <tensor/tensor_functions.hpp>
 #include <tensor/tensor_ops.hpp>
 
-#ifndef DEFAULT_BACKEND
-#define DEFAULT_BACKEND TensorBackend<T>(MTOps<T>())
+#ifndef DEFAULT_TENSOR_BACKEND
+#define DEFAULT_TENSOR_BACKEND TensorBackend<T>(MTOps<T>())
 #endif
 
 template <typename T>
 class Tensor {
  public:
+  Tensor(const Tensor<T>& other)
+      : data_(other.data_->clone()),
+        backend_(other.backend_),
+        history_(other.history_),
+        grad_(other.grad_) {}
+
+  Tensor<T>& operator=(const Tensor<T>& other) {
+    if (this != &other) {
+      data_ = other.data_->clone();
+      backend_ = other.backend_;
+      history_ = other.history_;
+      grad_ = other.grad_;
+    }
+    return *this;
+  }
+
   explicit Tensor() = default;
 
-  explicit Tensor(TensorData<T> data, TensorBackend<T> backend)
+  template <typename S>
+  explicit Tensor(TensorStorage<T, S> data) : Tensor(std::move(data), DEFAULT_TENSOR_BACKEND) {}
+  template <typename S>
+  explicit Tensor(TensorStorage<T, S> data, TensorBackend<T> backend)
+      : Tensor(std::make_unique<TensorStorage<T, S>>(std::move(data)), std::move(backend)) {}
+  explicit Tensor(std::unique_ptr<TensorData<T>> data, TensorBackend<T> backend)
       : data_(std::move(data)), backend_(std::move(backend)) {}
 
   explicit Tensor(Tensor<T>&& t, History<T>&& history)
@@ -30,36 +51,36 @@ class Tensor {
     return Tensor<T>::make({data.size()}, std::move(data));
   }
   static Tensor<T> make(Shape shape, std::vector<T>&& buffer) {
-    auto backend = DEFAULT_BACKEND;
+    auto backend = DEFAULT_TENSOR_BACKEND;
     return Tensor<T>::make(std::move(shape), std::move(buffer), std::move(backend));
   }
   static Tensor<T> make(Shape shape, std::vector<T>&& buffer, TensorBackend<T> backend) {
     auto data =
-        TensorData<T>(std::make_shared<std::vector<T>>(std::move(buffer)), std::move(shape));
+        TensorStorage<T>(std::make_shared<std::vector<T>>(std::move(buffer)), std::move(shape));
     return Tensor<T>(std::move(data), std::move(backend));
   }
   static Tensor<T> zeros(Shape shape) {
-    auto backend = DEFAULT_BACKEND;
+    auto backend = DEFAULT_TENSOR_BACKEND;
     return Tensor<T>::zeros(std::move(shape), std::move(backend));
   }
   static Tensor<T> zeros(Shape shape, TensorBackend<T> backend) {
     auto size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies());
-    auto data = TensorData<T>(std::make_shared<std::vector<T>>(size, 0), std::move(shape));
+    auto data = TensorStorage<T>(std::make_shared<std::vector<T>>(size, 0), std::move(shape));
 
     return Tensor<T>(std::move(data), std::move(backend));
   }
   static Tensor<T> ones(Shape shape) {
-    auto backend = DEFAULT_BACKEND;
+    auto backend = DEFAULT_TENSOR_BACKEND;
     return Tensor<T>::zeros(std::move(shape), std::move(backend));
   }
   static Tensor<T> ones(Shape shape, TensorBackend<T> backend) {
     auto size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies());
-    auto data = TensorData<T>(std::make_shared<std::vector<T>>(size, 1), std::move(shape));
+    auto data = TensorStorage<T>(std::make_shared<std::vector<T>>(size, 1), std::move(shape));
 
     return Tensor<T>(std::move(data), std::move(backend));
   }
   static Tensor<T> rand(Shape shape, T low, T hi) {
-    auto backend = DEFAULT_BACKEND;
+    auto backend = DEFAULT_TENSOR_BACKEND;
     return Tensor<T>::rand(std::move(shape), std::move(backend), low, hi);
   }
   static Tensor<T> rand(Shape shape, TensorBackend<T> backend, T low, T hi) {
@@ -68,7 +89,7 @@ class Tensor {
     std::generate(data.begin(), data.end(), [&low, &hi] { return nn::random::rand(low, hi); });
 
     auto _tensor =
-        TensorData<T>(std::make_shared<std::vector<T>>(std::move(data)), std::move(shape));
+        TensorStorage<T>(std::make_shared<std::vector<T>>(std::move(data)), std::move(shape));
     return Tensor<T>(std::move(_tensor), std::move(backend));
   }
 
@@ -82,7 +103,7 @@ class Tensor {
     }
   }
 
-  [[nodiscard]] Tensor<T> detach() const { return Tensor<T>(data_, backend_); }
+  [[nodiscard]] Tensor<T> detach() const { return Tensor<T>(data_->clone(), backend_); }
 
   [[nodiscard]] Tensor<T> expand(const Tensor<T>& other) const;
 
@@ -105,22 +126,22 @@ class Tensor {
   [[nodiscard]] const TensorBackend<T>& f() const { return backend_; }
 
   [[nodiscard]] typename TensorData<T>::const_ref item() const {
-    assert(data_.data()->size() == 1 && "item() only works on single-item tensors.");
-    return data_.data()->operator[](0);
+    assert(data_->size() == 1 && "item() only works on single-item tensors.");
+    return data_->at(0);
   }
 
   template <typename... Idx>
   typename TensorData<T>::ref operator()(Idx... idx) {
-    return data_.get({static_cast<std::size_t>(idx)...});
+    return data_->get({static_cast<std::size_t>(idx)...});
   }
 
   template <typename... Idx>
   typename TensorData<T>::const_ref operator()(Idx... idx) const {
-    return data_.get({static_cast<std::size_t>(idx)...});
+    return data_->get({static_cast<std::size_t>(idx)...});
   }
 
-  typename TensorData<T>::ref operator[](const Indices& idx) { return data_.get(idx); }
-  typename TensorData<T>::const_ref operator[](const Indices& idx) const { return data_.get(idx); }
+  typename TensorData<T>::ref operator[](const Indices& idx) { return data_->get(idx); }
+  typename TensorData<T>::const_ref operator[](const Indices& idx) const { return data_->get(idx); }
 
   [[nodiscard]] Tensor<T> contiguous() const { return Copy<T>()(*this); }
   [[nodiscard]] Tensor<T> view(const Shape& shape) const {
@@ -141,15 +162,15 @@ class Tensor {
     return Unsqueeze<T>()(*this, Tensor<T>::make(static_cast<T>(dim)));
   };
 
-  [[nodiscard]] const TensorData<T>& data() const { return data_; }
+  [[nodiscard]] const TensorData<T>* data() const { return data_.get(); }
 
-  [[nodiscard]] IndicesIterator indices() const { return data_.indices(); }
+  [[nodiscard]] IndicesIterator indices() const { return data_->indices(); }
 
-  [[nodiscard]] const Shape& shape() const { return data_.shape(); }
-  [[nodiscard]] const Strides& strides() const { return data_.strides(); }
-  [[nodiscard]] std::size_t size() const { return data_.size(); }
-  [[nodiscard]] std::size_t ndims() const { return data_.ndims(); }
-  [[nodiscard]] std::string to_string() const { return data_.to_string(); }
+  [[nodiscard]] const Shape& shape() const { return data_->shape(); }
+  [[nodiscard]] const Strides& strides() const { return data_->strides(); }
+  [[nodiscard]] std::size_t size() const { return data_->size(); }
+  [[nodiscard]] std::size_t ndims() const { return data_->ndims(); }
+  [[nodiscard]] std::string to_string() const { return data_->to_string(); }
 
   Tensor<T> to(TensorBackend<T> backend) {
     backend_ = std::move(backend);
@@ -157,8 +178,8 @@ class Tensor {
   }
 
  private:
-  TensorData<T> data_;
-  TensorBackend<T> backend_;
+  std::unique_ptr<TensorData<T>> data_;
+  TensorBackend<T> backend_ = DEFAULT_TENSOR_BACKEND;
   std::shared_ptr<History<T>> history_ = std::shared_ptr<History<T>>();
   std::shared_ptr<std::optional<Tensor<T>>> grad_ =
       std::make_shared<std::optional<Tensor<T>>>(std::nullopt);
@@ -174,7 +195,7 @@ template <typename T>
 void Tensor<T>::add_grad(const Tensor<T>& x) {
   assert(is_leaf() && "Only leaves should have derivatives.");
   if (!grad_->has_value()) {
-    *grad_ = Tensor<T>::zeros(data_.shape(), backend_);
+    *grad_ = Tensor<T>::zeros(data_->shape(), backend_);
   }
   *grad_ = grad_->value() + x;
 }
@@ -219,7 +240,7 @@ Tensor<T> Tensor<T>::expand(const Tensor<T>& other) const {
     }
   }
 
-  assert(data_.data()->size() == buf.data_.data()->size() && "Expanding shapes failed");
+  assert(data_->size() == buf.size() && "Expanding shapes failed");
   return buf;
 }
 
@@ -333,10 +354,10 @@ template <typename T, typename It>
                       (*t).strides().end()) &&
            "All stacked tensors need to have equal strides.");
 
-    data.insert(data.end(), (*t).data().data()->begin(), (*t).data().data()->end());
+    data.insert(data.end(), t->data()->begin(), t->data()->end());
   }
 
-  auto tensor = TensorData<T>{std::make_shared<std::vector<T>>(std::move(data)), std::move(strides),
+  auto tensor = TensorStorage<T>{std::make_shared<std::vector<T>>(std::move(data)), std::move(strides),
                               std::move(shape)};
   return Tensor<T>{std::move(tensor), backend};
 }

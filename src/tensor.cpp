@@ -7,12 +7,13 @@
 int main() {
   nn::random::seed(0x5EED);
 
-  auto mnist = nn::MnistDataset<double>("../data", nn::MnistDataset<double>::Set::TRAIN, 100);
+  auto mnist = nn::MnistDataset<double>("../../data", nn::MnistDataset<double>::Set::TRAIN, 100);
 
   auto model = nn::Sequential<double>();
-  model.add(nn::Linear<double>(28 * 28, 300));
+  model.add(nn::Linear<double, 28 * 28, 50>());
   model.add(nn::Sigmoid<double>());
-  model.add(nn::Linear<double>(300, 10));
+  model.add(nn::Linear<double, 50, 10>());
+  model.init();
 
   auto optimizer = nn::SGD<double>(model.params(), 0.01);
 
@@ -41,6 +42,7 @@ int main() {
       i += mnist.batch_size();
       std::cout << "\33[2K\r" << std::setw(3) << i << ": loss = " << loss.item()
                 << " correct = " << batch_correct.item() << std::flush;
+      model.save("../../trained_models/mnist.hpp", "mnist_model");
     }
     std::cout << "\33[2K\r";
     epoch_loss = epoch_loss / mnist.size();
@@ -49,9 +51,10 @@ int main() {
       std::cout << "Epoch " << epoch << ": Loss = " << epoch_loss << std::endl;
     }
   }
+  model.save("../../trained_models/mnist.hpp", "mnist_model");
 
   std::cout << "Evaluating..." << std::endl;
-  auto test = nn::MnistDataset<double>("../data", nn::MnistDataset<double>::Set::TEST, 100);
+  auto test = nn::MnistDataset<double>("../../data", nn::MnistDataset<double>::Set::TEST, 100);
   double correct = 0;
   for (auto&& [input, target] : test) {
     optimizer.zero_grad();

@@ -13,7 +13,9 @@ class Sigmoid : public Module<T> {
 
   Tensor<T> forward(const Tensor<T>& input) override { return sigmoid(input); };
 
-  std::string save(const std::string&) override { return "nn::Sigmoid<T>()"; };
+  void init() override {}
+
+  unsigned int init(const unsigned char data[], const unsigned int data_len) override { return 0; }
 
  private:
 };

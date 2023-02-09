@@ -72,14 +72,14 @@ class View : public Function<T> {
   [[nodiscard]] Tensor<T> forward([[maybe_unused]] Context& ctx,
                                   const std::vector<Tensor<T>>& inputs) const override {
     assert(inputs.size() == 2 && "View expects 2 inputs.");
-    assert(inputs[0].data().is_contiguous() && "Tensor must be contiguous to view.");
+    assert(inputs[0].data()->is_contiguous() && "Tensor must be contiguous to view.");
     ctx.save_for_backward(std::vector<Shape>{inputs[0].shape()});
 
     Shape shape(inputs[1].size());
     std::transform(inputs[1].indices().begin(), inputs[1].indices().end(), shape.begin(),
                    [&inputs](auto i) { return static_cast<std::size_t>(inputs[1][i]); });
 
-    auto data = TensorData<T>(inputs[0].data().data(), std::move(shape));
+    auto data = inputs[0].data()->view(shape);
     return Tensor<T>(std::move(data), inputs[0].f());
   }
 
@@ -87,7 +87,7 @@ class View : public Function<T> {
                                                 const Tensor<T>& grad) const override {
     auto& saved = ctx.saved_values();
     Shape shape = std::any_cast<Shape>(saved[0]);
-    auto data = TensorData<T>(grad.data().data(), std::move(shape));
+    auto data = grad.data()->view(shape);
     return {Tensor<T>(std::move(data), grad.f()), Tensor<T>::make(0)};
   }
 
@@ -154,7 +154,7 @@ class Unsqueeze : public Function<T> {
     shape.insert(shape.begin() + dim, 1);
     strides.insert(strides.begin() + dim, stride);
 
-    auto data = TensorData<T>(inputs[0].data().data(), std::move(strides), std::move(shape));
+    auto data = inputs[0].data()->view(shape, strides);
     return Tensor<T>(std::move(data), inputs[0].f());
   }
 
@@ -165,7 +165,7 @@ class Unsqueeze : public Function<T> {
     Indices strides = grad.strides();
     shape.erase(shape.begin() + dim);
     strides.erase(strides.begin() + dim);
-    auto data = TensorData<T>(grad.data().data(), std::move(strides), std::move(shape));
+    auto data = grad.data()->view(shape, strides);
     return {Tensor<T>(std::move(data), grad.f()), Tensor<T>::make(0)};
   }
 
@@ -403,7 +403,7 @@ class MatMul : public Function<T> {
       order[ndims - 1] = order[ndims - 2];
       order[ndims - 2] = last;
 
-      return Tensor<T>(t.data().permute(order), t.f());
+      return Tensor<T>(t.data()->permute(order), t.f());
     };
 
     return {
