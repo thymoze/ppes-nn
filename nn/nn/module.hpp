@@ -1,5 +1,6 @@
 #pragma once
 
+#include <any>
 #include <fstream>
 #include <tensor/tensor.hpp>
 #include <vector>
@@ -8,23 +9,35 @@ namespace nn {
 
 using namespace tensor;
 
-template <typename T>
 class Parameter {
  public:
-  Parameter() : value_(std::make_shared<Tensor<T>>()) {}
-  explicit Parameter(Tensor<T> val) : value_(std::make_shared<Tensor<T>>(std::move(val))) {
-    value_->requires_grad(true);
+  Parameter() : value_(std::make_shared<std::any>()) {}
+
+  template <typename T>
+  T& value() {
+    if (typeid(T) == value_->type())
+      return *std::any_cast<T>(value_.get());
+    else
+      throw std::logic_error("Can't request value of type " + std::string(typeid(T).name()) +
+                             " from parameter of type " + std::string(value_->type().name()));
   }
 
-  Tensor<T>& value() const { return *value_; }
-  void update(Tensor<T> val) {
+  template <typename T>
+  void update(T val) {
+    val.requires_grad(true);
     *value_ = std::move(val);
-    value_->requires_grad(true);
   }
 
  private:
-  std::shared_ptr<Tensor<T>> value_;
+  std::shared_ptr<std::any> value_;
 };
+
+template <typename T>
+Parameter make_param(Tensor<T> val) {
+  Parameter param;
+  param.update(val);
+  return param;
+}
 
 template <typename T>
 class Module {
@@ -33,13 +46,14 @@ class Module {
 
   virtual Tensor<T> forward(const Tensor<T>& input) = 0;
 
-  std::vector<Parameter<T>>& params() { return params_; }
+  std::vector<Parameter>& params() { return params_; }
 
   Tensor<T> operator()(const Tensor<T>& input) { return forward(input); }
 
   void zero_grad() {
     for (auto& param : params_) {
-      param.value().zero_grad();
+      auto v = param.template value<Tensor<T>>();
+      v.zero_grad();
     }
   }
 
@@ -56,7 +70,7 @@ class Module {
     stream << "const unsigned char " << name << "[] = { ";
     int size = 0;
     for (auto& param : params_) {
-      auto& data = *param.value().data();
+      auto& data = *param.value<Tensor<T>>().data();
       size += data.size() * sizeof(T);
       for (auto& v : data) {
         auto* p = reinterpret_cast<const std::uint8_t*>(&v);
@@ -72,7 +86,7 @@ class Module {
   }
 
  protected:
-  std::vector<Parameter<T>> params_;
+  std::vector<Parameter> params_;
 
   Module() = default;
 };

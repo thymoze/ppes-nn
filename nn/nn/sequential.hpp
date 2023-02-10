@@ -25,6 +25,8 @@ class Sequential : public Module<T> {
     this->params_.insert(this->params_.end(), module->params().begin(), module->params().end());
   }
 
+  std::vector<std::shared_ptr<Module<T>>>& modules() { return modules_; }
+
   void init() override {
     for (auto& module : modules_) {
       module->init();

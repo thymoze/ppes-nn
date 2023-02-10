@@ -1,9 +1,10 @@
 #include <iostream>
 #include <nn/all.hpp>
+#include <nn/quantization/quantization.hpp>
 #include <string>
 #include <utility>
 
-#include "../trained_models/mnist.hpp"
+#include "../trained_models/mnist_double_50.hpp"
 
 using tensor::Tensor;
 
@@ -54,10 +55,11 @@ Tensor<double> input = tensor::make<double>(
 
 int main(void) {
   auto model = nn::Sequential<double>();
-  model.add(nn::Linear<double, 28 * 28, 50>());
+  model.add(nn::Linear<double>(28 * 28, 50));
   model.add(nn::Sigmoid<double>());
-  model.add(nn::Linear<double, 50, 10>());
+  model.add(nn::Linear<double>(50, 10));
   model.init(mnist_model::mnist_model, mnist_model::mnist_model_len);
+  nn::quantization::quantize_dynamic(model);
 
   for (int i = 0; i < 28; i++) {
     for (int j = 0; j < 28; j++) {

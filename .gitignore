@@ -1,5 +1,7 @@
 .vscode
+.idea
 build
+cmake-build-debug
 
 trained_models/*
 !trained_models/XOR_Model.hpp

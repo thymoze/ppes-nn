@@ -12,12 +12,12 @@ int main() {
   };
 
   auto model = nn::Sequential<double>();
-  model.add(nn::Linear<double, 2, 3>());
+  model.add(nn::Linear<double>(2, 3));
   model.add(nn::Sigmoid<double>());
-  model.add(nn::Linear<double, 3, 1>());
+  model.add(nn::Linear<double>(3, 1));
   model.init();
 
-  auto optimizer = nn::SGD(model.params(), 0.25);
+  auto optimizer = nn::SGD<double>(model.params(), 0.25);
 
   for (int epoch = 0; epoch < 2000; epoch++) {
     auto& [input, target] = xor_data;
@@ -37,7 +37,7 @@ int main() {
 
   model.save("../../trained_models/xor.hpp", "xor_model");
 
-  for (auto& param : model.params()) {
-    std::cout << param.value() << std::endl;
-  }
+  // for (auto& param : model.params()) {
+  //   std::cout << param.value() << std::endl;
+  // }
 }

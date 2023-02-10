@@ -31,12 +31,8 @@ class Tensor {
   }
 
   explicit Tensor() = default;
-
-  template <typename S>
-  explicit Tensor(TensorStorage<T, S> data) : Tensor(std::move(data), DEFAULT_TENSOR_BACKEND) {}
-  template <typename S>
-  explicit Tensor(TensorStorage<T, S> data, TensorBackend<T> backend)
-      : Tensor(std::make_unique<TensorStorage<T, S>>(std::move(data)), std::move(backend)) {}
+  explicit Tensor(std::unique_ptr<TensorData<T>> data)
+      : Tensor(std::move(data), DEFAULT_TENSOR_BACKEND) {}
   explicit Tensor(std::unique_ptr<TensorData<T>> data, TensorBackend<T> backend)
       : data_(std::move(data)), backend_(std::move(backend)) {}
 
@@ -129,7 +125,7 @@ class Tensor {
     return *this;
   }
 
- private:
+ protected:
   std::unique_ptr<TensorData<T>> data_;
   TensorBackend<T> backend_ = DEFAULT_TENSOR_BACKEND;
   std::shared_ptr<History<T>> history_ = std::shared_ptr<History<T>>();
@@ -221,16 +217,8 @@ Tensor<T> operator-(const Tensor<T>& lhs, const Tensor<T>& rhs) {
   return Add<T>()(lhs, -rhs);
 }
 
-template <typename T>
-Tensor<T> operator==(const Tensor<T>& lhs, const Tensor<T>& rhs) {
-  return lhs.f().eq_zip(lhs, rhs);
-}
-
-template <typename T>
-Tensor<T> is_close(const Tensor<T>& lhs, const Tensor<T>& rhs) {
-  return lhs.f().is_close_zip(lhs, rhs);
-}
-
+// Calculates the sum of each slice in the input along the given dimension. If no dimension is
+// supplied, the sum of all elements is returned.
 template <typename T>
 Tensor<T> sum(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
   if (!dim) {
@@ -240,6 +228,8 @@ Tensor<T> sum(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt)
   }
 }
 
+// Calculates the mean of each slice in the input along the given dimension. If no dimension is
+// supplied, the mean of all elements is returned.
 template <typename T>
 Tensor<T> mean(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
   if (!dim) {
@@ -249,41 +239,34 @@ Tensor<T> mean(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt
   }
 }
 
-template <typename T>
-Tensor<T> all(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
-  if (!dim) {
-    return t.f().all_reduce(t.contiguous().view({t.size()}), 0);
-  } else {
-    return t.f().all_reduce(t, *dim);
-  }
-}
-
+// Applies the ReLU function.
 template <typename T>
 Tensor<T> relu(const Tensor<T>& t) {
   return ReLU<T>()(t);
 }
 
+// Applies the sigmoid function.
 template <typename T>
 Tensor<T> sigmoid(const Tensor<T>& t) {
   return Sigmoid<T>()(t);
 }
 
+// Applies the softmax function along a given dimension (i.e. every slice along dim will sum to 1)
 template <typename T>
 Tensor<T> softmax(const Tensor<T>& t, std::size_t dim) {
   auto e = Exp<T>()(t);
   return e / sum(e, dim);
 }
 
+// Calculates the matrix-matrix product of two tensors. For tensors >2d a batched
+// matrix-multiplication is performed.
 template <typename T>
 Tensor<T> matmul(const Tensor<T>& lhs, const Tensor<T>& rhs) {
   return MatMul<T>()(lhs, rhs);
 }
 
-template <typename T>
-std::ostream& operator<<(std::ostream& stream, const Tensor<T>& t) {
-  stream << t.to_string();
-  return stream;
-}
+// Non-differentiable operations:
+// (because it was not implemented yet, not because it would not be possible :) )
 
 template <typename T, typename It>
 [[nodiscard]] Tensor<T> stack(It start, It end) {
@@ -309,11 +292,58 @@ template <typename T, typename It>
     data.insert(data.end(), t->data()->begin(), t->data()->end());
   }
 
-  auto tensor = TensorStorage<T>{std::make_shared<std::vector<T>>(std::move(data)),
-                                 std::move(strides), std::move(shape)};
+  auto tensor = std::make_unique<VectorStorage<T>>(
+      std::make_shared<std::vector<T>>(std::move(data)), std::move(strides), std::move(shape));
   return Tensor<T>{std::move(tensor), backend};
 }
 
+// Element-wise equality comparison, returns a Tensor of 1s and 0s for equal and non-equal elements.
+template <typename T>
+Tensor<T> operator==(const Tensor<T>& lhs, const Tensor<T>& rhs) {
+  return lhs.f().eq_zip(lhs, rhs);
+}
+
+// Element-wise "closeness" comparison, where closeness is defined as:
+// > |lhs - rhs| <= abs_tol + rel_tol * |rhs|
+// Returns a Tensor of 1s and 0s for close and non-close elements.
+template <typename T>
+Tensor<T> is_close(const Tensor<T>& lhs, const Tensor<T>& rhs, float abs_tol = 1e-8,
+                   float rel_tol = 1e-5) {
+  return lhs.f().is_close_zip(lhs, rhs, abs_tol, rel_tol);
+}
+
+// Tests if all elements in the input are truthy (optionally only along a given dimension).
+template <typename T>
+Tensor<T> all(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
+  if (!dim) {
+    return t.f().all_reduce(t.contiguous().view({t.size()}), 0);
+  } else {
+    return t.f().all_reduce(t, *dim);
+  }
+}
+
+// Returns the smallest value in the input (optionally only along a given dimension).
+template <typename T>
+Tensor<T> min(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
+  if (!dim) {
+    return t.f().min_reduce(t.contiguous().view({t.size()}), 0);
+  } else {
+    return t.f().min_reduce(t, *dim);
+  }
+}
+
+// Returns the largest value in the input (optionally only along a given dimension).
+template <typename T>
+Tensor<T> max(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
+  if (!dim) {
+    return t.f().max_reduce(t.contiguous().view({t.size()}), 0);
+  } else {
+    return t.f().max_reduce(t, *dim);
+  }
+}
+
+// Returns the index of the largest value in the input along a given dimension. If no dimension is
+// supplied the index into the flattened input is returned.
 template <typename T>
 [[nodiscard]] Tensor<T> argmax(const Tensor<T>& input,
                                std::optional<std::size_t> dim = std::nullopt) {

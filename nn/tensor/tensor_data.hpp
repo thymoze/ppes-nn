@@ -171,7 +171,7 @@ std::size_t TensorData<T>::indices_to_position(const Indices& indices) const {
 
 // -------------------------------------
 
-template <typename T, typename S = std::shared_ptr<std::vector<T>>>
+template <typename T, typename S>
 class TensorStorage : public TensorData<T> {
  public:
   using DataPtr = S;
@@ -180,28 +180,32 @@ class TensorStorage : public TensorData<T> {
       : TensorStorage{std::move(data), shape_to_strides(shape), std::move(shape)} {}
   explicit TensorStorage(DataPtr data, Strides strides, Shape shape);
 
-  [[nodiscard]] TensorData<T>::ref at(std::size_t pos) override;
-  [[nodiscard]] TensorData<T>::const_ref at(std::size_t pos) const override;
+  [[nodiscard]] typename TensorData<T>::ref at(std::size_t pos) override;
+  [[nodiscard]] virtual typename TensorData<T>::const_ref at(std::size_t pos) const override = 0;
 
-  [[nodiscard]] TensorData<T>::ref get(const Indices& indices) override;
-  [[nodiscard]] TensorData<T>::const_ref get(const Indices& indices) const override;
+  [[nodiscard]] typename TensorData<T>::ref get(const Indices& indices) override;
+  [[nodiscard]] typename TensorData<T>::const_ref get(const Indices& indices) const override;
 
-  [[nodiscard]] TensorData<T>::ptr begin() override;
-  [[nodiscard]] TensorData<T>::ptr end() override;
-  [[nodiscard]] TensorData<T>::const_ptr begin() const override;
-  [[nodiscard]] TensorData<T>::const_ptr end() const override;
+  [[nodiscard]] typename TensorData<T>::ptr begin() override;
+  [[nodiscard]] typename TensorData<T>::ptr end() override;
+  [[nodiscard]] typename TensorData<T>::const_ptr begin() const override;
+  [[nodiscard]] typename TensorData<T>::const_ptr end() const override;
 
-  [[nodiscard]] std::size_t size() const override { return std::size(*data_); }
+  [[nodiscard]] virtual std::size_t size() const override = 0;
 
-  [[nodiscard]] std::unique_ptr<TensorData<T>> clone() const override;
+  [[nodiscard]] virtual std::unique_ptr<TensorData<T>> view(
+      const Shape& shape, const Strides& strides) const override = 0;
   [[nodiscard]] std::unique_ptr<TensorData<T>> permute(const Shape& order) const override;
-  [[nodiscard]] std::unique_ptr<TensorData<T>> view(const Shape& shape) const override;
-  [[nodiscard]] std::unique_ptr<TensorData<T>> view(const Shape& shape,
-                                                    const Strides& strides) const override;
+  [[nodiscard]] std::unique_ptr<TensorData<T>> view(const Shape& shape) const override {
+    return view(shape, shape_to_strides(shape));
+  }
+  [[nodiscard]] std::unique_ptr<TensorData<T>> clone() const override {
+    return view(this->shape_, this->strides_);
+  }
 
   [[nodiscard]] std::string to_string() const override;
 
- private:
+ protected:
   DataPtr data_;
 };
 
@@ -209,14 +213,6 @@ template <typename T, typename S>
 TensorStorage<T, S>::TensorStorage(DataPtr data, Strides strides, Shape shape)
     : TensorData<T>(std::move(strides), std::move(shape)), data_(std::move(data)) {
   assert(this->strides_.size() == this->shape_.size() && "Strides and shape must be same length.");
-  assert(std::size(*data_) ==
-             std::accumulate(this->shape_.begin(), this->shape_.end(), 1U, std::multiplies()) &&
-         "Size of data must match shape.");
-}
-
-template <typename T, typename S>
-std::unique_ptr<TensorData<T>> TensorStorage<T, S>::clone() const {
-  return std::make_unique<TensorStorage<T, S>>(data_, this->strides_, this->shape_);
 }
 
 template <typename T, typename S>
@@ -232,33 +228,17 @@ std::unique_ptr<TensorData<T>> TensorStorage<T, S>::permute(const Shape& order) 
     strides.push_back(this->strides_[pos]);
   }
 
-  return std::make_unique<TensorStorage<T, S>>(data_, strides, shape);
-}
-
-template <typename T, typename S>
-std::unique_ptr<TensorData<T>> TensorStorage<T, S>::view(const Shape& shape) const {
-  return std::make_unique<TensorStorage<T, S>>(data_, shape);
-}
-
-template <typename T, typename S>
-std::unique_ptr<TensorData<T>> TensorStorage<T, S>::view(const Shape& shape,
-                                                         const Strides& strides) const {
-  return std::make_unique<TensorStorage<T, S>>(data_, strides, shape);
+  return view(shape, strides);
 }
 
 template <typename T, typename S>
 typename TensorData<T>::ref TensorStorage<T, S>::at(std::size_t pos) {
-  return const_cast<TensorData<T>::ref>(std::as_const(*this).at(pos));
-}
-
-template <typename T, typename S>
-typename TensorData<T>::const_ref TensorStorage<T, S>::at(std::size_t pos) const {
-  return (*data_)[pos];
+  return const_cast<typename TensorData<T>::ref>(std::as_const(*this).at(pos));
 }
 
 template <typename T, typename S>
 typename TensorData<T>::ref TensorStorage<T, S>::get(const Indices& indices) {
-  return const_cast<TensorData<T>::ref>(std::as_const(*this).get(indices));
+  return const_cast<typename TensorData<T>::ref>(std::as_const(*this).get(indices));
 }
 
 template <typename T, typename S>
@@ -268,12 +248,12 @@ typename TensorData<T>::const_ref TensorStorage<T, S>::get(const Indices& indice
 
 template <typename T, typename S>
 [[nodiscard]] typename TensorData<T>::ptr TensorStorage<T, S>::begin() {
-  return const_cast<TensorData<T>::ptr>(std::as_const(*this).begin());
+  return const_cast<typename TensorData<T>::ptr>(std::as_const(*this).begin());
 }
 
 template <typename T, typename S>
 [[nodiscard]] typename TensorData<T>::ptr TensorStorage<T, S>::end() {
-  return const_cast<TensorData<T>::ptr>(std::as_const(*this).end());
+  return const_cast<typename TensorData<T>::ptr>(std::as_const(*this).end());
 }
 
 template <typename T, typename S>
@@ -304,7 +284,11 @@ std::string TensorStorage<T, S>::to_string() const {
     }
     res << l;
     auto v = get(index);
-    res << std::setw(5) << std::setprecision(4) << v;
+    if constexpr (std::is_same_v<T, char> || std::is_same_v<T, unsigned char>) {
+      res << std::setw(5) << std::setprecision(4) << static_cast<int>(v);
+    } else {
+      res << std::setw(5) << std::setprecision(4) << v;
+    }
     l = "";
     for (int i = index.size() - 1; i >= 0; i--) {
       if (index[i] == this->shape_[i] - 1) {
@@ -317,5 +301,54 @@ std::string TensorStorage<T, S>::to_string() const {
   }
   return res.str();
 }
+
+template <typename T>
+class VectorStorage : public TensorStorage<T, std::shared_ptr<std::vector<T>>> {
+ public:
+  using DataPtr = std::shared_ptr<std::vector<T>>;
+
+  explicit VectorStorage(DataPtr data, Shape shape)
+      : TensorStorage<T, DataPtr>(std::move(data), std::move(shape)) {}
+  explicit VectorStorage(DataPtr data, Strides strides, Shape shape)
+      : TensorStorage<T, DataPtr>(std::move(data), std::move(strides), std::move(shape)) {}
+
+  [[nodiscard]] typename TensorData<T>::const_ref at(std::size_t pos) const override {
+    return (*this->data_)[pos];
+  };
+  [[nodiscard]] std::size_t size() const override { return this->data_->size(); };
+
+  [[nodiscard]] std::unique_ptr<TensorData<T>> clone() const override {
+    return std::make_unique<VectorStorage<T>>(this->data_, this->strides_, this->shape_);
+  }
+
+  [[nodiscard]] std::unique_ptr<TensorData<T>> view(const Shape& shape,
+                                                    const Strides& strides) const override {
+    return std::make_unique<VectorStorage<T>>(this->data_, strides, shape);
+  }
+};
+
+template <typename T>
+class PointerStorage : public TensorStorage<T, const T*> {
+ public:
+  explicit PointerStorage(const T* data, Shape shape)
+      : TensorStorage<T, const T*>(std::move(data), std::move(shape)),
+        size_(std::accumulate(this->shape_.begin(), this->shape_.end(), 1U, std::multiplies())) {}
+  explicit PointerStorage(const T* data, Strides strides, Shape shape)
+      : TensorStorage<T, const T*>(std::move(data), std::move(strides), std::move(shape)),
+        size_(std::accumulate(this->shape_.begin(), this->shape_.end(), 1U, std::multiplies())) {}
+
+  [[nodiscard]] typename TensorData<T>::const_ref at(std::size_t pos) const override {
+    return *(this->data_ + pos);
+  };
+  [[nodiscard]] std::size_t size() const override { return size_; };
+
+  [[nodiscard]] std::unique_ptr<TensorData<T>> view(const Shape& shape,
+                                                    const Strides& strides) const override {
+    return std::make_unique<PointerStorage<T>>(this->data_, strides, shape);
+  }
+
+ private:
+  std::size_t size_;
+};
 
 }  // namespace tensor

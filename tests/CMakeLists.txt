@@ -13,3 +13,7 @@ include(Catch)
 add_executable(tensor_test tensor.test.cpp)
 target_link_libraries(tensor_test PRIVATE Catch2::Catch2WithMain nn)
 catch_discover_tests(tensor_test)
+
+add_executable(quantized_tensor_test tensor/quantization/quantized_tensor.test.cpp)
+target_link_libraries(quantized_tensor_test PRIVATE Catch2::Catch2WithMain nn)
+catch_discover_tests(quantized_tensor_test)

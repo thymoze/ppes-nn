@@ -9,12 +9,12 @@ namespace nn {
 template <typename T>
 class SGD {
  public:
-  SGD(const std::vector<Parameter<T>>& parameters, double learning_rate = 0.01)
+  SGD(const std::vector<Parameter>& parameters, double learning_rate = 0.01)
       : params_(parameters), learning_rate_(tensor::make<T>(learning_rate)) {}
 
   void step() {
     for (auto& param : params_) {
-      auto& data = param.value();
+      auto& data = param.template value<Tensor<T>>();
       assert(data.grad() && "Parameter must have a gradient.");
       auto& grad = *data.grad();
 
@@ -24,12 +24,12 @@ class SGD {
 
   void zero_grad() {
     for (auto& param : params_) {
-      param.value().zero_grad();
+      param.template value<Tensor<T>>().zero_grad();
     }
   }
 
  private:
-  std::vector<Parameter<T>> params_;
+  std::vector<Parameter> params_;
   Tensor<T> learning_rate_;
 };
 

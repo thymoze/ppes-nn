@@ -31,6 +31,17 @@ Shape broadcast_shapes(const Shape& lhs, const Shape& rhs) {
   return shape;
 }
 
+Shape broadcast_shapes_for_matmul(const Shape& lhs, const Shape& rhs) {
+  auto l_shape =
+      std::vector(lhs.begin(), lhs.end() - std::min(lhs.size(), static_cast<std::size_t>(2)));
+  auto r_shape =
+      std::vector(rhs.begin(), rhs.end() - std::min(rhs.size(), static_cast<std::size_t>(2)));
+  auto shape = broadcast_shapes(l_shape, r_shape);
+  shape.push_back(*(lhs.end() - 2));
+  shape.push_back(*(rhs.end() - 1));
+  return shape;
+}
+
 template <typename T>
 class TensorOps {
  public:
@@ -153,14 +164,17 @@ class TensorBackend {
     return out;
   }
 
-  void is_close_zip_out(const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) const {
-    return ops_->zip([](auto l, auto r) { return std::abs(l - r) <= 1e-5 + 1e-4 * std::abs(r); })(
-        lhs, rhs, out);
+  void is_close_zip_out(const Tensor<T>& lhs, const Tensor<T>& rhs, float abs_tol, float rel_tol,
+                        Tensor<T>& out) const {
+    return ops_->zip([abs_tol, rel_tol](auto l, auto r) {
+      return std::abs(l - r) <= abs_tol + rel_tol * std::abs(r);
+    })(lhs, rhs, out);
   }
-  [[nodiscard]] Tensor<T> is_close_zip(const Tensor<T>& lhs, const Tensor<T>& rhs) const {
+  [[nodiscard]] Tensor<T> is_close_zip(const Tensor<T>& lhs, const Tensor<T>& rhs, float abs_tol,
+                                       float rel_tol) const {
     auto shape = broadcast_shapes(lhs.shape(), rhs.shape());
     auto out = tensor::zeros<T>(shape, lhs.f());
-    is_close_zip_out(lhs, rhs, out);
+    is_close_zip_out(lhs, rhs, abs_tol, rel_tol, out);
     return out;
   }
 
@@ -208,8 +222,21 @@ class TensorBackend {
     return out;
   }
 
+  void min_reduce_out(const Tensor<T>& t, std::size_t dim, Tensor<T>& out) const {
+    return ops_->reduce([](auto l, auto r) { return std::min(l, r); },
+                        std::numeric_limits<T>::max())(t, dim, out);
+  }
+  [[nodiscard]] Tensor<T> min_reduce(const Tensor<T>& t, std::size_t dim) const {
+    auto shape = t.shape();
+    shape[dim] = 1;
+    auto out = tensor::zeros<T>(shape, t.f());
+    min_reduce_out(t, dim, out);
+    return out;
+  }
+
   void max_reduce_out(const Tensor<T>& t, std::size_t dim, Tensor<T>& out) const {
-    return ops_->reduce(std::max<T>(), std::numeric_limits<T>::min())(t, dim, out);
+    return ops_->reduce([](auto l, auto r) { return std::max(l, r); },
+                        std::numeric_limits<T>::min())(t, dim, out);
   }
   [[nodiscard]] Tensor<T> max_reduce(const Tensor<T>& t, std::size_t dim) const {
     auto shape = t.shape();
@@ -242,15 +269,7 @@ class TensorBackend {
     Tensor<T> rhs = b.ndims() == 2 ? b.unsqueeze(0) : b;
     bool both_2d = a.ndims() == 2 && b.ndims() == 2;
 
-    auto l_shape =
-        std::vector(lhs.shape().begin(),
-                    lhs.shape().end() - std::min(lhs.shape().size(), static_cast<std::size_t>(2)));
-    auto r_shape =
-        std::vector(rhs.shape().begin(),
-                    rhs.shape().end() - std::min(rhs.shape().size(), static_cast<std::size_t>(2)));
-    auto shape = broadcast_shapes(l_shape, r_shape);
-    shape.push_back(*(a.shape().end() - 2));
-    shape.push_back(*(b.shape().end() - 1));
+    auto shape = broadcast_shapes_for_matmul(lhs.shape(), rhs.shape());
 
     auto out = tensor::zeros<T>(shape, a.f());
     ops_->matrix_multiply(lhs, rhs, out);
@@ -269,7 +288,7 @@ class TensorBackend {
 template <typename T>
 class SimpleOps : public TensorOps<T> {
  public:
-  TensorOps<T>::ZipTensor zip(TensorOps<T>::ZipEl fn) override {
+  typename TensorOps<T>::ZipTensor zip(typename TensorOps<T>::ZipEl fn) override {
     auto zip_fn = [fn](const Tensor<T>& lhs, const Tensor<T>& rhs, Tensor<T>& out) {
       Indices lhs_idx, rhs_idx;
       for (auto& idx : out.indices()) {
@@ -283,7 +302,7 @@ class SimpleOps : public TensorOps<T> {
     return zip_fn;
   }
 
-  TensorOps<T>::MapTensor map(TensorOps<T>::MapEl fn) override {
+  typename TensorOps<T>::MapTensor map(typename TensorOps<T>::MapEl fn) override {
     auto map_fn = [fn](const Tensor<T>& t, Tensor<T>& out) {
       Indices t_idx;
       for (auto& idx : out.indices()) {
@@ -296,7 +315,7 @@ class SimpleOps : public TensorOps<T> {
     return map_fn;
   }
 
-  TensorOps<T>::ReduceTensor reduce(TensorOps<T>::ReduceEl fn, T start) override {
+  typename TensorOps<T>::ReduceTensor reduce(typename TensorOps<T>::ReduceEl fn, T start) override {
     auto reduce_fn = [fn, start](const Tensor<T>& t, std::size_t dim, Tensor<T>& out) {
       auto dim_size = t.shape()[dim];
       for (auto& idx : out.indices()) {
@@ -315,7 +334,8 @@ class SimpleOps : public TensorOps<T> {
     return reduce_fn;
   }
 
-  TensorOps<T>::ReduceIndexTensor reduce_index(TensorOps<T>::ReduceIndexEl fn, T start) override {
+  typename TensorOps<T>::ReduceIndexTensor reduce_index(typename TensorOps<T>::ReduceIndexEl fn,
+                                                        T start) override {
     auto reduce_fn = [fn, start](const Tensor<T>& t, std::size_t dim, Tensor<T>& out) {
       auto dim_size = t.shape()[dim];
       for (auto& idx : out.indices()) {
