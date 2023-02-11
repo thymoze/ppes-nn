@@ -20,6 +20,10 @@ class ReLU : public Module<T> {
 
   std::string save(const std::string&) override { return "nn::ReLU<T>()"; };
 
+  bool is_prunable() override { return false; }
+
+  void prune_one_neuron() override {}
+
  private:
 };
 

@@ -64,6 +64,19 @@ class Sequential : public Module<T> {
     return code;
   };
 
+  void prune_one_neuron() override {
+    for (auto& m : modules_) {
+      if (m->is_prunable()) {
+        std::cout << "hello" << std::endl;
+      }
+    }
+
+    modules_[2]->prune_one_neuron();
+    // prune module m with least important neuron
+  }
+
+  bool is_prunable() override { return false; }
+
  private:
   std::vector<std::shared_ptr<Module<T>>> modules_;
 };

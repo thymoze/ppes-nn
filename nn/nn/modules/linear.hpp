@@ -78,6 +78,15 @@ class Linear : public Module<T> {
     return code;
   };
 
+  bool is_prunable() override { return true; }
+
+  void prune_one_neuron() override {
+    std::cout << "hello in linear" << std::endl;
+    nn::Variable<T> weigths = this->params_[0];
+    int test = weigths.value().lowest_row_sum();
+    weigths.value().delete_row(test);
+  }
+
  private:
   Linear() = default;
 

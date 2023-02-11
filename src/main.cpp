@@ -13,6 +13,15 @@
 
 using var = nn::Variable<float>;
 
+// int main() {
+//   auto model = nn::Sequential<float>();
+//   model.add(nn::Linear<float>(2, 3, 0));
+//   model.add(nn::Sigmoid<float>());
+//   model.add(nn::Linear<float>(3, 1, 1));
+//   model.prune_one_neuron();
+//   // model.save("bla");
+// }
+
 int main() {
   std::vector<std::pair<var, var>> xor_data = {
       {var(nn::Matrix<float>{1, 2, {0, 0}}), var(nn::Matrix<float>{1, 1, {0}})},
@@ -56,5 +65,7 @@ int main() {
     }
   }
 
-  model.save("XOR_Model");
+  std::cout << "hello" << std::endl;
+
+  // model.save("XOR_Model");
 }

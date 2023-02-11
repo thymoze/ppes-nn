@@ -60,6 +60,39 @@ TEST_CASE("matmul_benchmark") {
   std::generate(vec2.begin(), vec2.end(), gen);
   auto m2 = Matrix<double>(50, 50, std::move(vec2));
 
-  BENCHMARK("matmul parallel") { return m1.matmul(m2); };
-  BENCHMARK("matmul sequential") { return m1.matmul_seq(m2); };
+  // BENCHMARK("matmul parallel") { return m1.matmul(m2); };
+  // BENCHMARK("matmul sequential") { return m1.matmul_seq(m2); };
+}
+
+TEST_CASE("delete_row") {
+  auto m = Matrix<int>({{1, 2}, {5, 6}});
+  auto expected = Matrix<int>({{5, 6}});
+
+  m.delete_row(0);
+
+  REQUIRE(m.rows() == 1);
+  REQUIRE(m.cols() == 2);
+  REQUIRE(std::equal(m.begin(), m.end(), expected.begin()));
+  REQUIRE(m.data().size() == expected.data().size());
+}
+
+TEST_CASE("delete_column") {
+  auto m = Matrix<int>({{1, 2, 3}, {3, 4, 5}});
+  auto expected = Matrix<int>({{1, 3}, {3, 5}});
+
+  m.delete_column(1);
+
+  REQUIRE(m.rows() == 2);
+  REQUIRE(m.cols() == 2);
+  REQUIRE(std::equal(m.begin(), m.end(), expected.begin()));
+  REQUIRE(m.data().size() == expected.data().size());
+}
+
+TEST_CASE("lowest_row_sum") {
+  auto m = Matrix<int>({{1, 1, 1}, {2, 2, 2}, {3, 3, 3}});
+  int expected = 0;
+
+  auto result = m.lowest_row_sum();
+
+  REQUIRE(result == expected);
 }

@@ -114,6 +114,32 @@ class Matrix {
     cols_ = cols;
   }
 
+  void delete_row(std::size_t row) {
+    assert(row < rows_ && "delete_row cannot delete a row greater than the existing rows");
+    rows_ -= 1;
+    data_.erase(data_.begin() + (row * this->cols_), data_.begin() + ((row + 1) * this->cols_));
+  }
+
+  void delete_column(std::size_t column) {
+    assert(column < cols_ &&
+           "delete_column cannot delete a column greater than the existing columns");
+    cols_ -= 1;
+    for (std::size_t i = 0; i < rows_; ++i) {
+      data_.erase(data_.begin() + (i * rows_ + column));
+    }
+  }
+
+  int lowest_row_sum() {
+    std::vector<int> row_sums(rows_);
+    for (std::size_t row = 0; row < rows_; ++row) {
+      row_sums[row] =
+          std::accumulate(data_.begin() + (row * cols_), data_.begin() + ((row + 1) * cols_), 0);
+    }
+
+    auto result = std::min_element(row_sums.begin(), row_sums.end());
+    return std::distance(row_sums.begin(), result);
+  }
+
   std::vector<T>& data() { return data_; }
 
   auto begin() { return data_.begin(); }
