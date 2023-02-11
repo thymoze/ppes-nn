@@ -79,7 +79,8 @@ Tensor<T> zeros(Shape shape) {
 template <typename T>
 Tensor<T> ones(Shape shape, TensorBackend<T> backend) {
   auto size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies());
-  auto data = VectorStorage<T>(std::make_shared<std::vector<T>>(size, 1), std::move(shape));
+  auto data = std::make_unique<VectorStorage<T>>(std::make_shared<std::vector<T>>(size, 1),
+                                                 std::move(shape));
 
   return Tensor<T>(std::move(data), std::move(backend));
 }
