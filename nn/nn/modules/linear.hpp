@@ -42,11 +42,25 @@ class Linear : public Module<T> {
 
     if (bias_) {
       const T* b_arr = reinterpret_cast<const T*>(data + (num_in_ * num_out_ * sizeof(T)));
-      auto b_storage = std::make_unique<PointerStorage<T>>(b_arr, Shape{num_out_});
+      auto b_storage = std::make_unique<PointerStorage<T>>(b_arr, Shape{1, num_out_});
       this->params_[1].update(Tensor<T>(std::move(b_storage)));
     }
 
     return size;
+  }
+
+  std::vector<std::uint8_t> data() override {
+    std::vector<std::uint8_t> result;
+    for (auto& param : this->params_) {
+      auto& data = *param.template value<Tensor<T>>().data();
+      for (auto& v : data) {
+        auto* p = reinterpret_cast<const std::uint8_t*>(&v);
+        for (std::size_t s = 0; s < sizeof(v); ++s) {
+          result.push_back(*(p + s));
+        }
+      }
+    }
+    return result;
   }
 
   Tensor<T> forward(const Tensor<T>& input) override {

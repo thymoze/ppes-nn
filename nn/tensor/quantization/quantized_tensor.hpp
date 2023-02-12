@@ -27,6 +27,11 @@ class QTensor : public Tensor<std::uint8_t> {
   QuantizationParams qparams_;
 };
 
+std::ostream& operator<<(std::ostream& stream, const quantization::QTensor& t) {
+  stream << t.to_string();
+  return stream;
+}
+
 }  // namespace quantization
 }  // namespace tensor
 
@@ -39,7 +44,8 @@ using quantization::QTensor;
 
 [[nodiscard]] std::string QTensor::to_string() const {
   std::stringstream out;
-  out << "(QTensor <scale=" << qparams_.scale << ", zero_point=" << qparams_.zero_point << ">\n";
+  out << "(QTensor <scale=" << qparams_.scale << ", zero_point=" << (int)qparams_.zero_point
+      << ">\n";
   out << tensor::quantization::dequantize<float>(*this).to_string() << ")";
   return out.str();
 }

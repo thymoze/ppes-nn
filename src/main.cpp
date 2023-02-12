@@ -1,23 +1,24 @@
 #include <iostream>
 #include <nn/all.hpp>
+#include <nn/quantization/quantization.hpp>
 
 using tensor::Tensor;
 
 int main() {
   nn::random::seed(0x5EED);
 
-  std::pair<Tensor<double>, Tensor<double>> xor_data = {
-      tensor::make<double>({4, 1, 2}, {0, 0, 1, 1, 1, 0, 0, 1}),
-      tensor::make<double>({4, 1, 1}, {0, 0, 1, 1}),
+  std::pair<Tensor<float>, Tensor<float>> xor_data = {
+      tensor::make<float>({4, 1, 2}, {0, 0, 1, 1, 1, 0, 0, 1}),
+      tensor::make<float>({4, 1, 1}, {0, 0, 1, 1}),
   };
 
-  auto model = nn::Sequential<double>();
-  model.add(nn::Linear<double>(2, 3));
-  model.add(nn::Sigmoid<double>());
-  model.add(nn::Linear<double>(3, 1));
+  auto model = nn::Sequential<float>();
+  model.add(nn::Linear<float>(2, 3));
+  model.add(nn::Sigmoid<float>());
+  model.add(nn::Linear<float>(3, 1));
   model.init();
 
-  auto optimizer = nn::SGD<double>(model.params(), 0.25);
+  auto optimizer = nn::SGD<float>(model.params(), 0.25);
 
   for (int epoch = 0; epoch < 2000; epoch++) {
     auto& [input, target] = xor_data;
@@ -35,57 +36,23 @@ int main() {
     }
   }
 
+  for (auto& p : model.params()) {
+    std::cout << p.template value<Tensor<float>>() << std::endl;
+  }
   model.save("../../trained_models/xor.hpp", "xor_model");
 
-  // for (auto& param : model.params()) {
-  //   std::cout << param.value() << std::endl;
-  // }
+  std::cout << std::endl;
+  nn::quantization::quantize_dynamic(model);
+
+  int i = 0;
+  for (auto& p : model.params()) {
+    if (i == 0 || i == 2) {
+      std::cout << p.template value<tensor::quantization::QTensor>() << std::endl;
+    } else {
+      std::cout << p.template value<Tensor<float>>() << std::endl;
+    }
+    ++i;
+  }
+
+  model.save("../../trained_models/xor_quant.hpp", "xor_quant_model");
 }
-
-// int main() {
-//   std::vector<std::pair<var, var>> xor_data = {
-//       {var(nn::Matrix<float>{1, 2, {0, 0}}), var(nn::Matrix<float>{1, 1, {0}})},
-//       {var(nn::Matrix<float>{1, 2, {1, 1}}), var(nn::Matrix<float>{1, 1, {0}})},
-//       {var(nn::Matrix<float>{1, 2, {1, 0}}), var(nn::Matrix<float>{1, 1, {1}})},
-//       {var(nn::Matrix<float>{1, 2, {0, 1}}), var(nn::Matrix<float>{1, 1, {1}})},
-//   };
-
-//   std::vector<std::pair<var, var>> and_data = {
-//       {var(nn::Matrix<float>{1, 2, {0, 0}}), var(nn::Matrix<float>{1, 1, {0}})},
-//       {var(nn::Matrix<float>{1, 2, {1, 1}}), var(nn::Matrix<float>{1, 1, {1}})},
-//       {var(nn::Matrix<float>{1, 2, {1, 0}}), var(nn::Matrix<float>{1, 1, {0}})},
-//       {var(nn::Matrix<float>{1, 2, {0, 1}}), var(nn::Matrix<float>{1, 1, {0}})},
-//   };
-
-//   auto model = nn::Sequential<float>();
-//   model.add(nn::Linear<float>(2, 3));
-//   model.add(nn::Sigmoid<float>());
-//   model.add(nn::Linear<float>(3, 1));
-
-//   auto optimizer = nn::SGD(model.params(), 0.1);
-
-//   for (int epoch = 0; epoch < 1000; epoch++) {
-//     double epoch_loss = 0;
-//     for (auto &[input, target] : xor_data) {
-//       auto output = model({input})[0];
-
-//       auto loss = nn::mse(output, target);
-
-//       optimizer.zero_grad();
-//       loss.backward();
-//       optimizer.step();
-//       loss.reset_dag();
-
-//       epoch_loss += loss(0, 0);
-//     }
-//     epoch_loss = epoch_loss / and_data.size();
-
-//     if (epoch % 100 == 0) {
-//       std::cout << "Epoch " << epoch << ": Loss = " << epoch_loss << std::endl;
-//     }
-//   }
-
-//   std::cout << "hello" << std::endl;
-
-//   // model.save("XOR_Model");
-// }

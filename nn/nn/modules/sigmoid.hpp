@@ -28,6 +28,8 @@ class Sigmoid : public Module<T> {
   void apply_pruned_neuron(int) override{};
   bool is_linear() override { return false; }
 
+  std::vector<std::uint8_t> data() override { return {}; }
+
  private:
 };
 

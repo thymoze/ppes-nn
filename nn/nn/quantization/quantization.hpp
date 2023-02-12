@@ -9,6 +9,7 @@ namespace quantization {
 
 template <typename T>
 void quantize_dynamic(Sequential<T>& model) {
+  std::vector<Parameter> params;
   for (auto& module : model.modules()) {
     auto linear = dynamic_cast<Linear<T>*>(module.get());
     if (linear != nullptr) {
@@ -22,8 +23,12 @@ void quantize_dynamic(Sequential<T>& model) {
 
       quant.params()[1] = linear->params()[1];
       module = std::make_shared<QLinear<T>>(std::move(quant));
+      params.insert(params.end(), quant.params().begin(), quant.params().end());
+    } else {
+      params.insert(params.end(), module->params().begin(), module->params().end());
     }
   }
+  model.params() = std::move(params);
 }
 
 }  // namespace quantization

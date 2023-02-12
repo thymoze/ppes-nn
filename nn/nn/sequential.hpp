@@ -92,6 +92,15 @@ class Sequential : public Module<T> {
   bool is_prunable() override { return false; }
   bool is_linear() override { return false; }
 
+  std::vector<std::uint8_t> data() override {
+    std::vector<std::uint8_t> data;
+    for (auto& mod : modules_) {
+      auto mod_data = mod->data();
+      data.insert(data.end(), mod_data.begin(), mod_data.end());
+    }
+    return data;
+  }
+
  private:
   std::vector<std::shared_ptr<Module<T>>> modules_;
 };

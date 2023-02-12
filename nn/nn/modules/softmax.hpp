@@ -19,6 +19,8 @@ class Softmax : public Module<T> {
 
   unsigned int init(const unsigned char data[], const unsigned int data_len) override { return 0; }
 
+  std::vector<std::uint8_t> data() override { return {}; }
+
  private:
   std::optional<std::size_t> dim_;
 };

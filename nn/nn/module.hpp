@@ -61,27 +61,21 @@ class Module {
 
   virtual unsigned int init(const unsigned char data[], const unsigned int data_len) = 0;
 
-  void save(const std::string& path, const std::string& name) {
-    std::vector<std::string> param_names;
+  virtual std::vector<std::uint8_t> data() = 0;
 
+  void save(const std::string& path, const std::string& name) {
     auto stream = std::ofstream(path, std::ios::trunc);
     stream << "#pragma once\n\n";
     stream << "namespace " << name << " {\n\n";
+    stream << "alignas(" << std::alignment_of_v<T> << ") ";
     stream << "const unsigned char " << name << "[] = { ";
-    int size = 0;
-    for (auto& param : params_) {
-      auto& data = *param.value<Tensor<T>>().data();
-      size += data.size() * sizeof(T);
-      for (auto& v : data) {
-        auto* p = reinterpret_cast<const std::uint8_t*>(&v);
-        for (std::size_t s = 0; s < sizeof(v); ++s) {
-          stream << "0x" << std::hex << static_cast<int>(*(p + s)) << ", ";
-        }
-      }
+    auto data = this->data();
+    for (auto& v : data) {
+      stream << "0x" << std::hex << static_cast<int>(v) << ", ";
     }
     stream.seekp((int)stream.tellp() - 2);
     stream << " };\n";
-    stream << "const unsigned int " << name << "_len = " << std::dec << size << ";\n";
+    stream << "const unsigned int " << name << "_len = " << std::dec << data.size() << ";\n";
     stream << "\n}\n";
   }
 
