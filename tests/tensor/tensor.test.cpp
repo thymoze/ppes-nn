@@ -155,11 +155,40 @@ TEST_CASE("Mean") {
   CHECK_THAT(*mean_2.data(), RangeEquals(std::vector<float>{2.5, 6.5, 10.5, 14.5, 18.5, 22.5}));
 }
 
-// TODO:
-TEST_CASE("ReLU") {}
+TEST_CASE("ReLU") {
+  auto t = tensor::make<float>({5, 1}, {5, 0, 0.1, -0.1, -3});
 
-TEST_CASE("Sigmoid") {}
+  auto res = tensor::relu(t);
+  CHECK_THAT(res.shape(), RangeEquals(std::vector<float>{5, 1}));
+  CHECK_THAT(*res.data(), RangeEquals(std::vector<float>{5, 0, 0.1, 0, 0}));
+}
 
-TEST_CASE("Softmax") {}
+TEST_CASE("Sigmoid") {
+  auto t = tensor::make<float>({1, 7}, {-10, -1, -0.5, 0, 0.5, 1, 10});
+
+  auto res = tensor::sigmoid(t);
+  CHECK_THAT(res.shape(), RangeEquals(std::vector<float>{1, 7}));
+  CHECK_THAT(*res.data(), RangeEquals(std::vector<float>{4.5398e-05, 0.26894, 0.37754, 0.50000,
+                                                         0.62246, 0.73106, 0.99995},
+                                      [](auto l, auto r) { return std::abs(l - r) < 1e-5; }));
+}
+
+// TEST_CASE("Softmax") {
+//   auto t = tensor::rand<float>({2, 3, 4});
+
+//   auto softmax_0 = tensor::softmax(t, 0);
+//   CHECK_THAT(softmax_0.shape(), RangeEquals(std::vector<float>{1, 3, 4}));
+//   CHECK_THAT(sum(softmax_0.data(), 0),
+//              AlRangeEquals(std::vector<float>{7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18}));
+
+//   auto softmax_1 = tensor::softmax(t, 1);
+//   CHECK_THAT(softmax_1.shape(), RangeEquals(std::vector<float>{2, 1, 4}));
+//   CHECK_THAT(*softmax_1.data(), RangeEquals(std::vector<float>{5, 6, 7, 8, 17, 18, 19, 20}));
+
+//   auto softmax_2 = tensor::softmax(t, 2);
+//   CHECK_THAT(softmax_2.shape(), RangeEquals(std::vector<float>{2, 3, 1}));
+//   CHECK_THAT(*softmax_2.data(),
+//   RangeEquals(std::vector<float>{2.5, 6.5, 10.5, 14.5, 18.5, 22.5}));
+// }
 
 TEST_CASE("Matrix multiplication") {}
