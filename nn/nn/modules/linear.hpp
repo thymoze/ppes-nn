@@ -25,7 +25,7 @@ class Linear : public Module<T> {
     auto bound = 1 / std::sqrt(num_in_);
     this->params_[0].update(tensor::rand<T>({num_in_, num_out_}, -bound, bound));
     if (bias_) {
-      this->params_[1].update(tensor::rand<T>({num_out_}, -bound, bound));
+      this->params_[1].update(tensor::rand<T>({1, num_out_}, -bound, bound));
     }
   }
 
@@ -59,24 +59,34 @@ class Linear : public Module<T> {
     return x;
   }
 
-  bool is_prunable() override { return this->params_[0].value().rows() > 1; }
+  bool is_prunable() override {
+    return this->params_[0].template value<Tensor<T>>().shape()[0] > 1;
+  }
 
   int prune_one_neuron() override {
-    nn::Variable<T> weigths = this->params_[0];
-    int test = weigths.value().lowest_row_sum_index();
-    weigths.value().delete_row(test);
-    return test;
+    auto& weights = this->params_[0].template value<Tensor<T>>();
+
+    auto abssums = tensor::min(tensor::abssum(weights, 0));
+    std::size_t idx = tensor::argmin(abssums).item();
+
+    this->params_[0].update(weights.remove(0, idx));
+
+    num_in_ -= 1;
+    return idx;
   }
 
   void apply_pruned_neuron(int neuron) override {
-    auto weights = this->params_[0];
-    std::cout << "column to delete" << neuron << std::endl;
-    weights.value().delete_column(neuron);
+    auto& weights = this->params_[0].template value<Tensor<T>>();
+
+    this->params_[0].update(weights.remove(1, neuron));
     if (bias_) {
-      auto bias_weights = this->params_[1];
-      bias_weights.value().delete_column(neuron);
+      auto& bias_weights = this->params_[1].template value<Tensor<T>>();
+
+      this->params_[1].update(bias_weights.remove(1, neuron));
     }
+    num_out_ -= 1;
   }
+
   bool is_linear() override { return true; }
 
   std::size_t num_in() const { return num_in_; }

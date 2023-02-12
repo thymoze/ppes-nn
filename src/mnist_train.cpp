@@ -66,16 +66,20 @@ int main() {
       i += mnist.batch_size();
       std::cout << "\33[2K\r" << std::setw(3) << i << ": loss = " << loss.item()
                 << " correct = " << batch_correct.item() << std::flush;
-      model.save("../../trained_models/mnist_float_100.hpp", "mnist_model");
+      // model.save("../../trained_models/mnist_float_100.hpp", "mnist_model");
     }
     std::cout << "\33[2K\r";
     epoch_loss = epoch_loss / mnist.size();
 
     std::cout << "Epoch " << epoch << ": Loss = " << epoch_loss << std::endl;
   }
-  model.save("../../trained_models/mnist_float_100.hpp", "mnist_model");
+  // model.save("../../trained_models/mnist_float_100.hpp", "mnist_model");
 
   evaluate<float>(model);
-  nn::quantization::quantize_dynamic(model);
+
+  for (int i = 0; i < 50; i++) {
+    model.prune_one_neuron();
+  }
+
   evaluate<float>(model);
 }

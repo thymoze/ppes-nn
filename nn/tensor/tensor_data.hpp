@@ -380,6 +380,10 @@ class PointerStorage : public TensorStorage<T, const T*> {
     return std::make_unique<PointerStorage<T>>(this->data_, strides, shape);
   }
 
+  void remove(std::size_t, std::size_t) override {
+    throw std::logic_error("Cannot remove from pointer-backed tensor.");
+  };
+
  private:
   std::size_t size_;
 };

@@ -17,7 +17,10 @@ class Sigmoid : public Module<T> {
 
   void init() override {}
 
-  unsigned int init(const unsigned char data[], const unsigned int data_len) override { return 0; }
+  unsigned int init([[maybe_unused]] const unsigned char data[],
+                    [[maybe_unused]] const unsigned int data_len) override {
+    return 0;
+  }
 
   bool is_prunable() override { return false; }
 

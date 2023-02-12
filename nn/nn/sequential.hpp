@@ -51,33 +51,38 @@ class Sequential : public Module<T> {
   };
 
   int prune_one_neuron() override {
-    std::vector<std::shared_ptr<Module<T>>> linear_bla;
+    std::vector<std::shared_ptr<Module<T>>> all_linear_layers;
     for (auto& m : modules_) {
       if (m->is_linear()) {
-        linear_bla.push_back(m);
+        all_linear_layers.push_back(m);
       }
     }
 
-    std::vector<std::pair<std::shared_ptr<Module<T>>, std::shared_ptr<Module<T>>>> linear_layer;
+    std::vector<std::pair<std::shared_ptr<Module<T>>, std::shared_ptr<Module<T>>>>
+        prunable_linear_layers;
 
-    for (std::size_t i = 1; i < linear_bla.size(); ++i) {
-      if (linear_bla[i]->is_prunable()) {
-        linear_layer.push_back(std::pair{linear_bla[i], linear_bla[i - 1]});
+    for (std::size_t i = 1; i < all_linear_layers.size(); ++i) {
+      if (all_linear_layers[i]->is_prunable()) {
+        prunable_linear_layers.push_back(std::pair{all_linear_layers[i], all_linear_layers[i - 1]});
       }
     }
 
     std::vector<T> lowest_row_sums;
-    for (std::size_t i = 0; i < linear_layer.size(); ++i) {
-      std::pair<std::shared_ptr<Module<T>>, std::shared_ptr<Module<T>>> bla = linear_layer[i];
-      lowest_row_sums.push_back(bla.first->params()[0].value().lowest_row_sum());
+    for (std::size_t i = 0; i < prunable_linear_layers.size(); ++i) {
+      lowest_row_sums.push_back(
+          tensor::min(
+              tensor::abssum(
+                  prunable_linear_layers[i].first->params()[0].template value<Tensor<T>>(), 0))
+              .item());
     }
 
     auto result = std::min_element(lowest_row_sums.begin(), lowest_row_sums.end());
     auto lowest_neuron_layer_index = std::distance(lowest_row_sums.begin(), result);
 
-    auto pruned_neuron = linear_layer[lowest_neuron_layer_index].first->prune_one_neuron();
+    auto pruned_neuron =
+        prunable_linear_layers[lowest_neuron_layer_index].first->prune_one_neuron();
 
-    linear_layer[lowest_neuron_layer_index].second->apply_pruned_neuron(pruned_neuron);
+    prunable_linear_layers[lowest_neuron_layer_index].second->apply_pruned_neuron(pruned_neuron);
 
     return pruned_neuron;
   }

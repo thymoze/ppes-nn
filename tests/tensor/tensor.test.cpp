@@ -218,3 +218,14 @@ TEST_CASE("Remove") {
 
   CHECK_THROWS_AS(res3.remove(0, 1), std::logic_error);
 }
+
+TEST_CASE("Remove one dimensional") {
+  auto t = tensor::make<float>({2, 3, 4});
+
+  INFO("Input:\n" << t);
+
+  auto res = t.remove(0, 1);
+  INFO("Removed (0, 1):\n" << res);
+  CHECK_THAT(res.shape(), RangeEquals(std::vector<float>{2}));
+  CHECK_THAT(*res.data(), RangeEquals(std::vector<float>{2, 4}));
+}
