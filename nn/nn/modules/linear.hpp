@@ -5,6 +5,7 @@
 #include <matrix/matrix.hpp>
 #include <nn/module.hpp>
 #include <random>
+#include <sstream>
 
 namespace nn {
 
@@ -54,38 +55,48 @@ class Linear : public Module<T> {
   }
 
   std::string save(const std::string&) override {
+    std::stringstream code_stream;
     auto weights = this->params_[0];
-    auto bias_weights = this->params_[1];
-    std::string code = std::string("nn::Linear<T>(nn::Matrix<T>{") +
-                       std::to_string(weights.rows()) + std::string(", ") +
-                       std::to_string(weights.cols()) + std::string(", {");
+    code_stream << "nn::Linear<T>(nn::Matrix<T>{" << weights.rows() << ", " << weights.cols()
+                << ", {";
     for (auto val : weights.value()) {
-      code += std::to_string(val) + ", ";
+      code_stream << val << ", ";
     }
-    code.pop_back();
-    code.pop_back();
 
-    code += "}}, nn::Matrix<T>{" + std::to_string(bias_weights.rows()) + std::string(", ") +
-            std::to_string(bias_weights.cols()) + std::string(", {");
+    code_stream.seekp(-2, code_stream.cur);
 
-    for (auto val : bias_weights.value()) {
-      code += std::to_string(val) + ", ";
+    if (bias_) {
+      auto bias_weights = this->params_[1];
+      code_stream << "}}, nn::Matrix<T>{" << bias_weights.rows() << ", " << bias_weights.cols()
+                  << ", {";
+      for (auto val : bias_weights.value()) {
+        code_stream << val << ", ";
+      }
+      code_stream.seekp(-2, code_stream.cur);
     }
-    code.pop_back();
-    code.pop_back();
-
-    code += "}})";
-    return code;
+    code_stream << "}})";
+    return code_stream.str();
   };
 
-  bool is_prunable() override { return true; }
+  bool is_prunable() override { return this->params_[0].value().rows() > 1; }
 
-  void prune_one_neuron() override {
-    std::cout << "hello in linear" << std::endl;
+  int prune_one_neuron() override {
     nn::Variable<T> weigths = this->params_[0];
-    int test = weigths.value().lowest_row_sum();
+    int test = weigths.value().lowest_row_sum_index();
     weigths.value().delete_row(test);
+    return test;
   }
+
+  void apply_pruned_neuron(int neuron) override {
+    auto weights = this->params_[0];
+    std::cout << "column to delete" << neuron << std::endl;
+    weights.value().delete_column(neuron);
+    if (bias_) {
+      auto bias_weights = this->params_[1];
+      bias_weights.value().delete_column(neuron);
+    }
+  }
+  bool is_linear() override { return true; }
 
  private:
   Linear() = default;

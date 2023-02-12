@@ -12,13 +12,14 @@ int main() {
   auto mnist = nn::MnistDataset<double>("../../data", nn::MnistDataset<double>::Set::TRAIN);
 
   auto model = nn::Sequential<double>();
-  model.add(nn::Linear<double>(28 * 28, 300));
+  model.add(nn::Linear<double>(28 * 28, 50));
   model.add(nn::Sigmoid<double>());
-  model.add(nn::Linear<double>(300, 10));
-
+  model.add(nn::Linear<double>(50, 50));
+  model.add(nn::Sigmoid<double>());
+  model.add(nn::Linear<double>(50, 10));
   auto optimizer = nn::SGD(model.params(), 0.0001);
 
-  for (int epoch = 0; epoch < 100; epoch++) {
+  for (int epoch = 0; epoch < 20; epoch++) {
     double epoch_loss = 0;
 
     int i = 1;
@@ -55,12 +56,17 @@ int main() {
         batch_loss = nn::Variable<double>(nn::Matrix<double>(1, 1));
         batch_correct = 0;
       }
-
       i++;
     }
+
     std::cout << "\33[2K\r";
     epoch_loss = epoch_loss / mnist.size();
 
     std::cout << "Epoch " << epoch << ": Loss = " << epoch_loss << std::endl;
   }
+
+  for (int k = 0; k < 50; ++k) {
+    model.prune_one_neuron();
+  }
+  model.save("MNIST_new");
 }

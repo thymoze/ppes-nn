@@ -123,21 +123,32 @@ class Matrix {
   void delete_column(std::size_t column) {
     assert(column < cols_ &&
            "delete_column cannot delete a column greater than the existing columns");
-    cols_ -= 1;
     for (std::size_t i = 0; i < rows_; ++i) {
-      data_.erase(data_.begin() + (i * rows_ + column));
+      data_.erase(data_.begin() + (i * cols_ + column) - i);
     }
+    cols_ -= 1;
   }
 
-  int lowest_row_sum() {
-    std::vector<int> row_sums(rows_);
+  int lowest_row_sum_index() {
+    std::vector<T> row_sums(rows_);
     for (std::size_t row = 0; row < rows_; ++row) {
       row_sums[row] =
-          std::accumulate(data_.begin() + (row * cols_), data_.begin() + ((row + 1) * cols_), 0);
+          std::accumulate(data_.begin() + (row * cols_), data_.begin() + ((row + 1) * cols_), 0.0);
     }
 
     auto result = std::min_element(row_sums.begin(), row_sums.end());
     return std::distance(row_sums.begin(), result);
+  }
+
+  T lowest_row_sum() {
+    std::vector<T> row_sums;
+    for (std::size_t row = 0; row < rows_; ++row) {
+      row_sums.push_back(
+          std::accumulate(data_.begin() + (row * cols_), data_.begin() + ((row + 1) * cols_), 0.0));
+    }
+    auto min_element = std::min_element(row_sums.begin(), row_sums.end());
+
+    return *min_element;
   }
 
   std::vector<T>& data() { return data_; }

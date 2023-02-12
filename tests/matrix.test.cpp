@@ -88,11 +88,20 @@ TEST_CASE("delete_column") {
   REQUIRE(m.data().size() == expected.data().size());
 }
 
-TEST_CASE("lowest_row_sum") {
+TEST_CASE("lowest_row_sum_index") {
   auto m = Matrix<int>({{1, 1, 1}, {2, 2, 2}, {3, 3, 3}});
   int expected = 0;
 
-  auto result = m.lowest_row_sum();
+  auto actual = m.lowest_row_sum_index();
 
-  REQUIRE(result == expected);
+  REQUIRE(actual == expected);
+}
+
+TEST_CASE("lowest_row_sum") {
+  auto m = Matrix<int>({{1, 1, 1}, {2, 2, 2}, {3, 3, 3}});
+  int expected = 3;
+
+  auto actual = m.lowest_row_sum();
+
+  REQUIRE(actual == expected);
 }

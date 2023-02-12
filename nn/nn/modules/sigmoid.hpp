@@ -24,7 +24,9 @@ class Sigmoid : public Module<T> {
 
   bool is_prunable() override { return false; }
 
-  void prune_one_neuron() override {}
+  int prune_one_neuron() override { return -1; }
+  void apply_pruned_neuron(int) override{};
+  bool is_linear() override { return false; }
 
  private:
 };
