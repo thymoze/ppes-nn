@@ -14,6 +14,14 @@ using Strides = std::vector<std::size_t>;
 using Shape = std::vector<std::size_t>;
 using Indices = std::vector<std::size_t>;
 
+std::string to_string(const std::vector<std::size_t>& x) {
+  std::stringstream s;
+  s << "(";
+  std::copy(x.begin(), x.end(), std::ostream_iterator<std::size_t>(s, ", "));
+  s << ")";
+  return s.str();
+}
+
 void to_index(int ord, const Shape& shape, Indices& out_index) {
   out_index.clear();
   out_index.reserve(shape.size());
@@ -131,7 +139,7 @@ class TensorData {
 
   [[nodiscard]] virtual std::size_t size() const = 0;
 
-  virtual void remove(std::size_t dim, std::size_t idx) const = 0;
+  virtual void remove(std::size_t dim, std::size_t idx) = 0;
 
   [[nodiscard]] virtual std::unique_ptr<TensorData<T>> clone() const = 0;
   [[nodiscard]] virtual std::unique_ptr<TensorData<T>> permute(const Shape& order) const = 0;
@@ -195,7 +203,7 @@ class TensorStorage : public TensorData<T> {
 
   [[nodiscard]] virtual std::size_t size() const override = 0;
 
-  virtual void remove(std::size_t dim, std::size_t idx) const = 0;
+  virtual void remove(std::size_t dim, std::size_t idx) = 0;
 
   [[nodiscard]] virtual std::unique_ptr<TensorData<T>> view(
       const Shape& shape, const Strides& strides) const override = 0;
@@ -321,11 +329,25 @@ class VectorStorage : public TensorStorage<T, std::shared_ptr<std::vector<T>>> {
   };
   [[nodiscard]] std::size_t size() const override { return this->data_->size(); };
 
-  void remove(std::size_t dim, std::size_t idx) const override {
-    auto stride = this->strides_[dim];
-    for (auto start = idx; start < size(); start += stride) {
-      this->data_->erase(start);
+  void remove(std::size_t dim, std::size_t idx) override {
+    if (idx >= this->shape_[dim]) {
+      throw std::logic_error("Cannot remove index " + std::to_string(idx) + " in dimension " +
+                             std::to_string(dim) + " in tensor of shape " +
+                             to_string(this->shape_));
     }
+
+    auto stride = this->strides_[dim];
+    auto size = this->size();
+    auto step = dim == 0 ? size : this->strides_[dim - 1];
+    std::size_t removed = 0;
+    for (std::size_t start = stride * idx; start < size; start += step) {
+      auto offset = this->data_->begin() + start - removed;
+      this->data_->erase(offset, offset + stride);
+      removed += stride;
+    }
+
+    this->shape_[dim] -= 1;
+    this->strides_ = shape_to_strides(this->shape_);
   }
 
   [[nodiscard]] std::unique_ptr<TensorData<T>> clone() const override {

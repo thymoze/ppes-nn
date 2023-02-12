@@ -28,14 +28,6 @@ class SimpleOps;
 template <typename T>
 class MTOps;
 
-std::string to_string(std::vector<std::size_t> x) {
-  std::stringstream s;
-  s << "(";
-  std::copy(x.begin(), x.end(), std::ostream_iterator<std::size_t>(s, ", "));
-  s << ")";
-  return s.str();
-}
-
 template <typename T>
 std::ostream& operator<<(std::ostream& stream, const Tensor<T>& t) {
   stream << t.to_string();

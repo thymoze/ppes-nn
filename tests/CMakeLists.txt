@@ -12,7 +12,7 @@ include(Catch)
 
 function(test_file target file)
   add_executable(${target} ${file}.cpp)
-  target_compile_options(${target} PRIVATE -fsanitize=address,undefined)
+  target_compile_options(${target} PRIVATE -g -fsanitize=address,undefined)
   target_link_options(${target} PRIVATE -fsanitize=address,undefined)
   target_link_libraries(${target} PRIVATE Catch2::Catch2WithMain nn)
   catch_discover_tests(${target})

@@ -192,3 +192,29 @@ TEST_CASE("Sigmoid") {
 // }
 
 TEST_CASE("Matrix multiplication") {}
+
+TEST_CASE("Remove") {
+  std::vector<float> data(2 * 3 * 4);
+  std::iota(data.begin(), data.end(), 1);
+  auto t = tensor::make<float>({2, 3, 4}, std::move(data));
+
+  INFO("Input:\n" << t);
+
+  auto res = t.remove(2, 2);
+  INFO("Removed (2, 2):\n" << res);
+  CHECK_THAT(res.shape(), RangeEquals(std::vector<float>{2, 3, 3}));
+  CHECK_THAT(*res.data(), RangeEquals(std::vector<float>{1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 16,
+                                                         17, 18, 20, 21, 22, 24}));
+
+  auto res2 = res.remove(0, 1);
+  INFO("Removed (0, 1):\n" << res2);
+  CHECK_THAT(res2.shape(), RangeEquals(std::vector<float>{1, 3, 3}));
+  CHECK_THAT(*res2.data(), RangeEquals(std::vector<float>{1, 2, 4, 5, 6, 8, 9, 10, 12}));
+
+  auto res3 = res2.remove(0, 0);
+  INFO("Removed (0, 1):\n" << res3);
+  CHECK_THAT(res3.shape(), RangeEquals(std::vector<float>{0, 3, 3}));
+  CHECK_THAT(*res3.data(), RangeEquals(std::vector<float>{}));
+
+  CHECK_THROWS_AS(res3.remove(0, 1), std::logic_error);
+}

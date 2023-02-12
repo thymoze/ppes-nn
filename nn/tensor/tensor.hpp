@@ -101,7 +101,7 @@ class Tensor {
 
   [[nodiscard]] Tensor<T> remove(std::size_t dim, std::size_t idx) const {
     auto t = contiguous();
-    t.data_.remove(dim, idx);
+    t.data_->remove(dim, idx);
     return t;
   }
 
@@ -372,11 +372,11 @@ template <typename T>
 }
 
 template <typename T>
-Tensor<T> abssum(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
+Tensor<T> abssum(const Tensor<T>& input, std::optional<std::size_t> dim = std::nullopt) {
   if (!dim) {
-    return input.f().abs_add_reduce(t.contiguous().view({t.size()}), 0);
+    return input.f().abs_add_reduce(input.contiguous().view({input.size()}), 0);
   } else {
-    return input.f().abs_add_reduce(t, *dim);
+    return input.f().abs_add_reduce(input, *dim);
   }
 }
 
