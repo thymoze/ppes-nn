@@ -85,6 +85,14 @@ class Module {
     stream << "\n}\n";
   }
 
+  virtual bool is_prunable() = 0;
+
+  bool has_params() const { return params_.size() != 0; }
+  virtual int prune_one_neuron() = 0;
+  virtual void apply_pruned_neuron(int neuron) = 0;
+
+  virtual bool is_linear() = 0;
+
  protected:
   std::vector<Parameter> params_;
 

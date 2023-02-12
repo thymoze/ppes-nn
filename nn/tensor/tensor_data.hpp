@@ -131,6 +131,8 @@ class TensorData {
 
   [[nodiscard]] virtual std::size_t size() const = 0;
 
+  virtual void remove(std::size_t dim, std::size_t idx) const = 0;
+
   [[nodiscard]] virtual std::unique_ptr<TensorData<T>> clone() const = 0;
   [[nodiscard]] virtual std::unique_ptr<TensorData<T>> permute(const Shape& order) const = 0;
   [[nodiscard]] virtual std::unique_ptr<TensorData<T>> view(const Shape& shape) const = 0;
@@ -192,6 +194,8 @@ class TensorStorage : public TensorData<T> {
   [[nodiscard]] typename TensorData<T>::const_ptr end() const override;
 
   [[nodiscard]] virtual std::size_t size() const override = 0;
+
+  virtual void remove(std::size_t dim, std::size_t idx) const = 0;
 
   [[nodiscard]] virtual std::unique_ptr<TensorData<T>> view(
       const Shape& shape, const Strides& strides) const override = 0;
@@ -316,6 +320,13 @@ class VectorStorage : public TensorStorage<T, std::shared_ptr<std::vector<T>>> {
     return (*this->data_)[pos];
   };
   [[nodiscard]] std::size_t size() const override { return this->data_->size(); };
+
+  void remove(std::size_t dim, std::size_t idx) const override {
+    auto stride = this->strides_[dim];
+    for (auto start = idx; start < size(); start += stride) {
+      this->data_->erase(start);
+    }
+  }
 
   [[nodiscard]] std::unique_ptr<TensorData<T>> clone() const override {
     return std::make_unique<VectorStorage<T>>(this->data_, this->strides_, this->shape_);

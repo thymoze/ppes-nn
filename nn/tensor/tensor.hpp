@@ -98,6 +98,13 @@ class Tensor {
                    [](auto v) { return static_cast<T>(v); });
     return View<T>()(*this, tensor::make<T>(std::move(new_shape)));
   }
+
+  [[nodiscard]] Tensor<T> remove(std::size_t dim, std::size_t idx) const {
+    auto t = contiguous();
+    t.data_.remove(dim, idx);
+    return t;
+  }
+
   [[nodiscard]] Tensor<T> reshape(const Shape& shape) const {
     if (data_.is_contiguous()) {
       return view(shape);
@@ -351,6 +358,25 @@ template <typename T>
     return input.f().argmax_reduce(input.contiguous().view({input.size()}), 0);
   } else {
     return input.f().argmax_reduce(input, *dim);
+  }
+}
+
+template <typename T>
+[[nodiscard]] Tensor<T> argmin(const Tensor<T>& input,
+                               std::optional<std::size_t> dim = std::nullopt) {
+  if (!dim) {
+    return input.f().argmin_reduce(input.contiguous().view({input.size()}), 0);
+  } else {
+    return input.f().argmin_reduce(input, *dim);
+  }
+}
+
+template <typename T>
+Tensor<T> abssum(const Tensor<T>& t, std::optional<std::size_t> dim = std::nullopt) {
+  if (!dim) {
+    return input.f().abs_add_reduce(t.contiguous().view({t.size()}), 0);
+  } else {
+    return input.f().abs_add_reduce(t, *dim);
   }
 }
 

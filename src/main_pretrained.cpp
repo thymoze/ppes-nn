@@ -18,13 +18,16 @@ int main(void) {
     std::getline(std::cin, input);
     float first = std::stoi(input);
 
-    std::cout << "2. Input: ";
-    std::getline(std::cin, input);
-    float second = std::stoi(input);
+    //     std::cout << "2. Input: ";
+    //     std::getline(std::cin, input);
+    //     float second = std::stoi(input);
 
     auto in = tensor::make<double>({1, 2}, {first, second});
     auto out = model(in);
 
     std::cout << "Output: " << out.item() << std::endl;
   }
+
+  std::cout << "accuracy: " << static_cast<double>(correct) / mnist.size() << std::endl;
+  ;
 }

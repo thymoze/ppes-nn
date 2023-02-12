@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 #include <nn/module.hpp>
+#include <random>
 
 namespace nn {
 
@@ -58,9 +59,29 @@ class Linear : public Module<T> {
     return x;
   }
 
-  [[nodiscard]] std::size_t num_in() const { return num_in_; }
-  [[nodiscard]] std::size_t num_out() const { return num_out_; }
-  [[nodiscard]] bool bias() const { return bias_; }
+  bool is_prunable() override { return this->params_[0].value().rows() > 1; }
+
+  int prune_one_neuron() override {
+    nn::Variable<T> weigths = this->params_[0];
+    int test = weigths.value().lowest_row_sum_index();
+    weigths.value().delete_row(test);
+    return test;
+  }
+
+  void apply_pruned_neuron(int neuron) override {
+    auto weights = this->params_[0];
+    std::cout << "column to delete" << neuron << std::endl;
+    weights.value().delete_column(neuron);
+    if (bias_) {
+      auto bias_weights = this->params_[1];
+      bias_weights.value().delete_column(neuron);
+    }
+  }
+  bool is_linear() override { return true; }
+
+  std::size_t num_in() const { return num_in_; }
+  std::size_t num_out() const { return num_out_; }
+  bool bias() const { return bias_; }
 
  protected:
   std::size_t num_in_;

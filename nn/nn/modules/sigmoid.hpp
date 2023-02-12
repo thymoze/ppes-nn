@@ -19,6 +19,12 @@ class Sigmoid : public Module<T> {
 
   unsigned int init(const unsigned char data[], const unsigned int data_len) override { return 0; }
 
+  bool is_prunable() override { return false; }
+
+  int prune_one_neuron() override { return -1; }
+  void apply_pruned_neuron(int) override{};
+  bool is_linear() override { return false; }
+
  private:
 };
 

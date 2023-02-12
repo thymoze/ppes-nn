@@ -200,6 +200,17 @@ class TensorBackend {
     return out;
   }
 
+  void abs_add_reduce_out(const Tensor<T>& t, std::size_t dim, Tensor<T>& out) const {
+    return ops_->reduce([](auto l, auto r) { return std::abs(l) + std::abs(r); }, 0)(t, dim, out);
+  }
+  [[nodiscard]] Tensor<T> abs_add_reduce(const Tensor<T>& t, std::size_t dim) const {
+    auto shape = t.shape();
+    shape[dim] = 1;
+    auto out = tensor::zeros<T>(shape, t.f());
+    abs_add_reduce_out(t, dim, out);
+    return out;
+  }
+
   void mul_reduce_out(const Tensor<T>& t, std::size_t dim, Tensor<T>& out) const {
     return ops_->reduce(std::multiplies<T>(), 1)(t, dim, out);
   }
@@ -258,6 +269,21 @@ class TensorBackend {
     shape[dim] = 1;
     auto out = tensor::zeros<T>(shape, t.f());
     argmax_reduce_out(t, dim, out);
+    return out;
+  }
+
+  void argmin_reduce_out(const Tensor<T>& t, std::size_t dim, Tensor<T>& out) const {
+    return ops_->reduce_index(
+        [](auto l, auto r, auto l_idx, auto r_idx) {
+          return l <= r ? std::pair{l, l_idx} : std::pair{r, r_idx};
+        },
+        std::numeric_limits<T>::max())(t, dim, out);
+  }
+  [[nodiscard]] Tensor<T> argmin_reduce(const Tensor<T>& t, std::size_t dim) const {
+    auto shape = t.shape();
+    shape[dim] = 1;
+    auto out = tensor::zeros<T>(shape, t.f());
+    argmin_reduce_out(t, dim, out);
     return out;
   }
 
