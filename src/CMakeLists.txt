@@ -7,7 +7,7 @@ function(ADD_COMPILE_LINK_EXECUTABLE EXE_NAME MAIN_FILE)
       $<$<CONFIG:Debug>:-g -fsanitize=address,undefined>
   )
   target_link_options(${EXE_NAME}
-    PRIVATE
+    PRIVATE -pthread
       $<$<CONFIG:Debug>:-fsanitize=address,undefined>
   )
 endfunction()
