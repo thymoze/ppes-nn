@@ -324,6 +324,7 @@ class VectorStorage : public TensorStorage<T, std::shared_ptr<std::vector<T>>> {
   explicit VectorStorage(DataPtr data, Strides strides, Shape shape)
       : TensorStorage<T, DataPtr>(std::move(data), std::move(strides), std::move(shape)) {}
 
+  using TensorData<T>::at;
   [[nodiscard]] typename TensorData<T>::const_ref at(std::size_t pos) const override {
     return (*this->data_)[pos];
   };
@@ -354,6 +355,7 @@ class VectorStorage : public TensorStorage<T, std::shared_ptr<std::vector<T>>> {
     return std::make_unique<VectorStorage<T>>(this->data_, this->strides_, this->shape_);
   }
 
+  using TensorData<T>::view;
   [[nodiscard]] std::unique_ptr<TensorData<T>> view(const Shape& shape,
                                                     const Strides& strides) const override {
     return std::make_unique<VectorStorage<T>>(this->data_, strides, shape);
@@ -375,6 +377,7 @@ class PointerStorage : public TensorStorage<T, const T*> {
   };
   [[nodiscard]] std::size_t size() const override { return size_; };
 
+  using TensorData<T>::view;
   [[nodiscard]] std::unique_ptr<TensorData<T>> view(const Shape& shape,
                                                     const Strides& strides) const override {
     return std::make_unique<PointerStorage<T>>(this->data_, strides, shape);

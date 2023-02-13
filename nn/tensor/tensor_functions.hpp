@@ -107,8 +107,8 @@ class Squeeze : public Function<T> {
 
   [[nodiscard]] Tensor<T> forward([[maybe_unused]] Context& ctx,
                                   const std::vector<Tensor<T>>& inputs) const override {
-    assert(inputs.size() == 2 && "Squeeze expects 1 input.");
-    ctx.save_for_backward({inputs[0].shape(), inputs[0].strides()});
+    assert(inputs.size() == 1 && "Squeeze expects 1 input.");
+    ctx.save_for_backward(std::vector<Shape>{inputs[0].shape(), inputs[0].strides()});
 
     Shape shape;
     Indices strides;
@@ -119,7 +119,7 @@ class Squeeze : public Function<T> {
       }
     }
 
-    auto data = TensorData<T>(inputs[0].data().data(), std::move(strides), std::move(shape));
+    auto data = inputs[0].data()->view(std::move(strides), std::move(shape));
     return Tensor<T>(std::move(data), inputs[0].f());
   }
 
@@ -127,7 +127,7 @@ class Squeeze : public Function<T> {
                                                 const Tensor<T>& grad) const override {
     auto orig_shape = std::any_cast<Shape>(ctx.saved_values()[0]);
     auto orig_strides = std::any_cast<Strides>(ctx.saved_values()[1]);
-    auto data = TensorData<T>(grad.data().data(), std::move(orig_strides), std::move(orig_shape));
+    auto data = grad.data()->view(std::move(orig_shape), std::move(orig_strides));
     return {Tensor<T>(std::move(data), grad.f())};
   }
 
@@ -156,7 +156,7 @@ class Unsqueeze : public Function<T> {
     shape.insert(shape.begin() + dim, 1);
     strides.insert(strides.begin() + dim, stride);
 
-    auto data = inputs[0].data()->view(shape, strides);
+    auto data = inputs[0].data()->view(std::move(shape), std::move(strides));
     return Tensor<T>(std::move(data), inputs[0].f());
   }
 
@@ -167,7 +167,7 @@ class Unsqueeze : public Function<T> {
     Indices strides = grad.strides();
     shape.erase(shape.begin() + dim);
     strides.erase(strides.begin() + dim);
-    auto data = grad.data()->view(shape, strides);
+    auto data = grad.data()->view(std::move(shape), std::move(strides));
     return {Tensor<T>(std::move(data), grad.f()), tensor::make<T>(0)};
   }
 
@@ -234,14 +234,17 @@ class ReLU : public Function<T> {
   [[nodiscard]] Tensor<T> forward([[maybe_unused]] Context& ctx,
                                   const std::vector<Tensor<T>>& inputs) const override {
     assert(inputs.size() == 1 && "ReLU expects 1 input.");
-    ctx.save_for_backward(inputs);
-    return inputs[0].f().relu_map(inputs[0]);
+    auto relu = inputs[0].f().relu_map(inputs[0]);
+    ctx.save_for_backward(inputs[0]);
+    ctx.save_for_backward(relu);
+    return relu;
   }
 
   [[nodiscard]] std::vector<Tensor<T>> backward([[maybe_unused]] const Context& ctx,
                                                 const Tensor<T>& grad) const override {
-    auto saved = std::any_cast<Tensor<T>>(ctx.saved_values()[0]);
-    auto ones = tensor::ones<T>(saved.shape(), saved.f());
+    auto input = std::any_cast<Tensor<T>>(ctx.saved_values()[0]);
+    auto relu = std::any_cast<Tensor<T>>(ctx.saved_values()[1]);
+    auto ones = input == relu;
     return {grad.f().mul_zip(grad, grad.f().relu_map(ones))};
   }
 

@@ -16,8 +16,20 @@ function(test_file target file)
   target_link_options(${target} PRIVATE -fsanitize=address,undefined)
   target_link_libraries(${target} PRIVATE Catch2::Catch2WithMain nn)
   catch_discover_tests(${target})
+  set_target_properties(${target} PROPERTIES EXCLUDE_FROM_ALL true)
+  list(APPEND test_targets ${target})
+  set(test_targets ${test_targets} PARENT_SCOPE)
 endfunction()
 
-test_file(tensor_test tensor/tensor.test)
+################
+# Add tests here
+
+test_file(tensor_init_test tensor/tensor_init.test)
+test_file(tensor_data_test tensor/tensor_data.test)
+test_file(tensor_math_test tensor/tensor_math.test)
+test_file(autodiff_test tensor/autodiff.test)
 test_file(quantized_tensor_test tensor/quantization/quantized_tensor.test)
 
+################
+
+add_custom_target(tests DEPENDS ${test_targets})

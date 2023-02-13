@@ -1,8 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
 #include <tensor/tensor.hpp>
 
+using Catch::Matchers::AllMatch;
 using Catch::Matchers::RangeEquals;
+using Catch::Matchers::WithinRel;
 
 TEST_CASE("Negation") {
   auto l = tensor::make<int>({2, 3}, {1, 2, 3, 4, 5, 6});
@@ -89,7 +92,7 @@ TEST_CASE("Simple division") {
   auto r = tensor::make<float>({2, 3}, {1, 2, 3, 4, 5, 6});
 
   auto res = l / r;
-  CHECK_THAT(res.shape(), RangeEquals(std::vector<float>{2, 3}));
+  CHECK_THAT(res.shape(), RangeEquals(std::vector<int>{2, 3}));
   CHECK_THAT(*res.data(), RangeEquals(std::vector<float>{2, 2, 3, 4, 5, 6}));
 }
 
@@ -105,7 +108,7 @@ TEST_CASE("Broadcasting division") {
 
   auto r2 = tensor::make<float>(10);
   auto res2 = l / r2;
-  CHECK_THAT(res2.shape(), RangeEquals(std::vector<float>{4, 1}));
+  CHECK_THAT(res2.shape(), RangeEquals(std::vector<int>{4, 1}));
   CHECK_THAT(*res2.data(), RangeEquals(std::vector<float>{1. / 10, 2. / 10, 3. / 10, 4. / 10}));
 }
 
@@ -138,7 +141,7 @@ TEST_CASE("Mean") {
   auto t = tensor::make<float>({2, 3, 4}, std::move(data));
 
   auto mean_all = tensor::mean(t);
-  CHECK_THAT(mean_all.shape(), RangeEquals(std::vector<float>{1}));
+  CHECK_THAT(mean_all.shape(), RangeEquals(std::vector<int>{1}));
   CHECK_THAT(*mean_all.data(), RangeEquals(std::vector<float>{12.5}));
 
   auto mean_0 = tensor::mean(t, 0);
@@ -147,11 +150,11 @@ TEST_CASE("Mean") {
              RangeEquals(std::vector<float>{7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18}));
 
   auto mean_1 = tensor::mean(t, 1);
-  CHECK_THAT(mean_1.shape(), RangeEquals(std::vector<float>{2, 1, 4}));
+  CHECK_THAT(mean_1.shape(), RangeEquals(std::vector<int>{2, 1, 4}));
   CHECK_THAT(*mean_1.data(), RangeEquals(std::vector<float>{5, 6, 7, 8, 17, 18, 19, 20}));
 
   auto mean_2 = tensor::mean(t, 2);
-  CHECK_THAT(mean_2.shape(), RangeEquals(std::vector<float>{2, 3, 1}));
+  CHECK_THAT(mean_2.shape(), RangeEquals(std::vector<int>{2, 3, 1}));
   CHECK_THAT(*mean_2.data(), RangeEquals(std::vector<float>{2.5, 6.5, 10.5, 14.5, 18.5, 22.5}));
 }
 
@@ -159,7 +162,7 @@ TEST_CASE("ReLU") {
   auto t = tensor::make<float>({5, 1}, {5, 0, 0.1, -0.1, -3});
 
   auto res = tensor::relu(t);
-  CHECK_THAT(res.shape(), RangeEquals(std::vector<float>{5, 1}));
+  CHECK_THAT(res.shape(), RangeEquals(std::vector<int>{5, 1}));
   CHECK_THAT(*res.data(), RangeEquals(std::vector<float>{5, 0, 0.1, 0, 0}));
 }
 
@@ -167,65 +170,58 @@ TEST_CASE("Sigmoid") {
   auto t = tensor::make<float>({1, 7}, {-10, -1, -0.5, 0, 0.5, 1, 10});
 
   auto res = tensor::sigmoid(t);
-  CHECK_THAT(res.shape(), RangeEquals(std::vector<float>{1, 7}));
+  CHECK_THAT(res.shape(), RangeEquals(std::vector<int>{1, 7}));
   CHECK_THAT(*res.data(), RangeEquals(std::vector<float>{4.5398e-05, 0.26894, 0.37754, 0.50000,
                                                          0.62246, 0.73106, 0.99995},
                                       [](auto l, auto r) { return std::abs(l - r) < 1e-5; }));
 }
 
-// TEST_CASE("Softmax") {
-//   auto t = tensor::rand<float>({2, 3, 4});
+TEST_CASE("Softmax") {
+  auto t = tensor::rand<float>({2, 3, 4});
 
-//   auto softmax_0 = tensor::softmax(t, 0);
-//   CHECK_THAT(softmax_0.shape(), RangeEquals(std::vector<float>{1, 3, 4}));
-//   CHECK_THAT(sum(softmax_0.data(), 0),
-//              AlRangeEquals(std::vector<float>{7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18}));
+  auto softmax_0 = tensor::softmax(t, 0);
+  CHECK_THAT(softmax_0.shape(), RangeEquals(std::vector<int>{2, 3, 4}));
+  CHECK_THAT(*tensor::sum(softmax_0, 0).data(), AllMatch(WithinRel(1, 1e-6)));
 
-//   auto softmax_1 = tensor::softmax(t, 1);
-//   CHECK_THAT(softmax_1.shape(), RangeEquals(std::vector<float>{2, 1, 4}));
-//   CHECK_THAT(*softmax_1.data(), RangeEquals(std::vector<float>{5, 6, 7, 8, 17, 18, 19, 20}));
+  auto softmax_1 = tensor::softmax(t, 1);
+  CHECK_THAT(softmax_1.shape(), RangeEquals(std::vector<int>{2, 3, 4}));
+  CHECK_THAT(*tensor::sum(softmax_1, 1).data(), AllMatch(WithinRel(1, 1e-6)));
 
-//   auto softmax_2 = tensor::softmax(t, 2);
-//   CHECK_THAT(softmax_2.shape(), RangeEquals(std::vector<float>{2, 3, 1}));
-//   CHECK_THAT(*softmax_2.data(),
-//   RangeEquals(std::vector<float>{2.5, 6.5, 10.5, 14.5, 18.5, 22.5}));
-// }
-
-TEST_CASE("Matrix multiplication") {}
-
-TEST_CASE("Remove") {
-  std::vector<float> data(2 * 3 * 4);
-  std::iota(data.begin(), data.end(), 1);
-  auto t = tensor::make<float>({2, 3, 4}, std::move(data));
-
-  INFO("Input:\n" << t);
-
-  auto res = t.remove(2, 2);
-  INFO("Removed (2, 2):\n" << res);
-  CHECK_THAT(res.shape(), RangeEquals(std::vector<float>{2, 3, 3}));
-  CHECK_THAT(*res.data(), RangeEquals(std::vector<float>{1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 16,
-                                                         17, 18, 20, 21, 22, 24}));
-
-  auto res2 = res.remove(0, 1);
-  INFO("Removed (0, 1):\n" << res2);
-  CHECK_THAT(res2.shape(), RangeEquals(std::vector<float>{1, 3, 3}));
-  CHECK_THAT(*res2.data(), RangeEquals(std::vector<float>{1, 2, 4, 5, 6, 8, 9, 10, 12}));
-
-  auto res3 = res2.remove(0, 0);
-  INFO("Removed (0, 1):\n" << res3);
-  CHECK_THAT(res3.shape(), RangeEquals(std::vector<float>{0, 3, 3}));
-  CHECK_THAT(*res3.data(), RangeEquals(std::vector<float>{}));
-
-  CHECK_THROWS_AS(res3.remove(0, 1), std::logic_error);
+  auto softmax_2 = tensor::softmax(t, 2);
+  CHECK_THAT(softmax_2.shape(), RangeEquals(std::vector<int>{2, 3, 4}));
+  CHECK_THAT(*tensor::sum(softmax_2, 2).data(), AllMatch(WithinRel(1, 1e-6)));
 }
 
-TEST_CASE("Remove one dimensional") {
-  auto t = tensor::make<float>({2, 3, 4});
+TEST_CASE("2D Matrix multiplication") {
+  auto ops = GENERATE(tensor::SimpleOps<float>(), tensor::MTOps<float>());
+  auto backend = tensor::TensorBackend<float>(ops);
 
-  INFO("Input:\n" << t);
+  std::vector<float> data(2 * 3);
+  std::iota(data.begin(), data.end(), 1);
+  auto l = tensor::make<float>({2, 3}, std::vector<float>(data), backend);
+  auto r = tensor::eye<float>(3, backend);
 
-  auto res = t.remove(0, 1);
-  INFO("Removed (0, 1):\n" << res);
-  CHECK_THAT(res.shape(), RangeEquals(std::vector<float>{2}));
-  CHECK_THAT(*res.data(), RangeEquals(std::vector<float>{2, 4}));
+  auto res = tensor::matmul(l, r);
+  CHECK_THAT(res.shape(), RangeEquals(std::vector<int>{2, 3}));
+  CHECK_THAT(*res.data(), RangeEquals(std::vector<float>{1, 2, 3, 4, 5, 6}));
+
+  auto r2 = tensor::make<float>({3, 4}, {1, -2, 3, -4, 5, -6, 6, -5, 4, -3, 2, -1});
+  auto res2 = tensor::matmul(l, r2);
+
+  CHECK_THAT(res2.shape(), RangeEquals(std::vector<int>{2, 4}));
+  CHECK_THAT(*res2.data(), RangeEquals(std::vector<float>{23, -23, 21, -17, 53, -56, 54, -47}));
+}
+
+TEST_CASE("Broadcasting matrix multiplication") {
+  auto ops = GENERATE(tensor::SimpleOps<float>(), tensor::MTOps<float>());
+  auto backend = tensor::TensorBackend<float>(ops);
+
+  std::vector<float> data(4 * 1 * 2 * 3);
+  std::iota(data.begin(), data.end(), 1);
+  auto l = tensor::make<float>({4, 1, 2, 3}, std::vector<float>(data), backend);
+  auto r = tensor::Tensor<float>(l.data()->permute({1, 0, 3, 2}), backend);
+
+  auto res = tensor::matmul(l, r);
+  CHECK_THAT(res.shape(), RangeEquals(std::vector<int>{4, 4, 2, 2}));
+  CHECK(tensor::sum(res).item() == 30128);
 }

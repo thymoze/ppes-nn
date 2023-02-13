@@ -79,7 +79,25 @@ Tensor<T> ones(Shape shape, TensorBackend<T> backend) {
 template <typename T>
 Tensor<T> ones(Shape shape) {
   auto backend = DEFAULT_TENSOR_BACKEND;
-  return zeros(std::move(shape), std::move(backend));
+  return ones(std::move(shape), std::move(backend));
+}
+
+template <typename T>
+Tensor<T> eye(std::size_t n, TensorBackend<T> backend) {
+  auto data = std::vector<T>(n * n, 0);
+  for (std::size_t i = 0; i < n; ++i) {
+    data[i * n + i] = 1;
+  }
+
+  auto storage = std::make_unique<VectorStorage<T>>(
+      std::make_shared<std::vector<T>>(std::move(data)), Shape{n, n});
+
+  return Tensor<T>(std::move(storage), std::move(backend));
+}
+template <typename T>
+Tensor<T> eye(std::size_t n) {
+  auto backend = DEFAULT_TENSOR_BACKEND;
+  return eye(n, std::move(backend));
 }
 
 template <typename T>

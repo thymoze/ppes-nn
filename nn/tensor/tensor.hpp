@@ -56,6 +56,7 @@ class Tensor {
   [[nodiscard]] Tensor<T> expand(const Tensor<T>& other) const;
 
   void backward();
+  void backward(const Tensor<T>& grad);
   void add_grad(const Tensor<T>& x);
   void zero_grad() { *grad_ = std::nullopt; }
 
@@ -142,7 +143,13 @@ class Tensor {
 
 template <typename T>
 void Tensor<T>::backward() {
+  assert(data_->size() == 1 && "grad can only be implicitly created for scalar tensors");
   auto grad = tensor::make<T>({1}, {1}, backend_);
+  backward(grad);
+}
+
+template <typename T>
+void Tensor<T>::backward(const Tensor<T>& grad) {
   backpropagate(*this, grad);
 }
 
