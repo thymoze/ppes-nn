@@ -3,7 +3,7 @@
 #include <nn/all.hpp>
 #include <nn/dataset/mnist_dataset.hpp>
 
-#include "../trained_models/mnist_float_100.hpp"
+#include "../trained_models/mnist_float_300_2_pruned_100.hpp"
 
 extern const std::uint8_t _binary_t50_images_idx3_ubyte_start[];
 extern const std::uint8_t _binary_t50_images_idx3_ubyte_end[];

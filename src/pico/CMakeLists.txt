@@ -25,7 +25,7 @@ function(pico_app target file)
   add_pico_upload(${target})
 endfunction()
 
-pico_app(main_pico main_pico)
+pico_app(xor_pico xor_pico)
 
 pico_app(mnist_pico mnist_pico)
 target_link_libraries(mnist_pico PRIVATE eval)

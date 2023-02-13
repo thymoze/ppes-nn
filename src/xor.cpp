@@ -36,23 +36,5 @@ int main() {
     }
   }
 
-  for (auto& p : model.params()) {
-    std::cout << p.template value<Tensor<float>>() << std::endl;
-  }
   model.save("../../trained_models/xor.hpp", "xor_model");
-
-  std::cout << std::endl;
-  nn::quantization::quantize_dynamic(model);
-
-  int i = 0;
-  for (auto& p : model.params()) {
-    if (i == 0 || i == 2) {
-      std::cout << p.template value<tensor::quantization::QTensor>() << std::endl;
-    } else {
-      std::cout << p.template value<Tensor<float>>() << std::endl;
-    }
-    ++i;
-  }
-
-  model.save("../../trained_models/xor_quant.hpp", "xor_quant_model");
 }
