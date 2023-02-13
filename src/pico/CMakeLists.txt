@@ -3,6 +3,13 @@ set(PICO_CXX_ENABLE_RTTI 1)
 
 pico_sdk_init()
 
+add_library(eval evaluate.hpp)
+set_target_properties(eval
+  PROPERTIES
+    LINKER_LANGUAGE CXX
+)
+link_binary(eval t50-images-idx3-ubyte t50-labels-idx1-ubyte)
+
 function(pico_app target file)
   add_executable(${target} ${file}.cpp)
   target_link_libraries(${target} PRIVATE nn pico_stdlib)
@@ -21,4 +28,4 @@ endfunction()
 pico_app(main_pico main_pico)
 
 pico_app(mnist_pico mnist_pico)
-link_binary(mnist_pico t50-images-idx3-ubyte t50-labels-idx1-ubyte)
+target_link_libraries(mnist_pico PRIVATE eval)

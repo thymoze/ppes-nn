@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.15)
 
 include(cmake/link_binary.cmake)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
 if(BUILD_PICO)
   set(BUILD_TESTING false)
   include(cmake/pico_sdk.cmake)

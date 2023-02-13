@@ -6,7 +6,7 @@
 #include <nn/all.hpp>
 #include <string>
 
-#include "../../trained_models/mnist_float_100.hpp"
+#include "../trained_models/mnist_float_300_2_pruned_100.hpp"
 #include "evaluate.hpp"
 
 using tensor::Tensor;
@@ -19,9 +19,6 @@ int main(void) {
   model.add(nn::Sigmoid<float>());
   model.add(nn::Linear<float>(100, 10));
   model.init(mnist_model::mnist_model, mnist_model::mnist_model_len);
-  for (auto& p : model.params()) {
-    p.template value<Tensor<float>>().requires_grad(false);
-  }
 
   sleep_ms(5000);
 

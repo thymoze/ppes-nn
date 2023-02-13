@@ -177,6 +177,8 @@ std::vector<std::pair<Tensor<T>, Tensor<T>>> Tensor<T>::backprop_step(const Tens
   return result;
 }
 
+// Used by backprop_step to expand the shape of the calculated gradient to that of the original
+// tensor
 template <typename T>
 Tensor<T> Tensor<T>::expand(const Tensor<T>& other) const {
   // Case 1: Both the same shape
