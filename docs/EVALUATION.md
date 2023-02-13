@@ -10,7 +10,7 @@ Note that due to RAM-constraints† we will only evaluate the accuracy on the fi
 
 |                                             | `double` | `float` |
 | ------------------------------------------- | -------- | ------- |
-| Accuracy on full test set                   | 90.17%   | 90.16%  |
+| Accuracy on full test set (x86)             | 90.17%   | 90.16%  |
 | Binary size                                 | 1.67 MB  | 1.03 MB |
 | Accuracy on first 20 images of the test set | 95%      | 95%     |
 | Inference time                              | 24.85s   | 19.79s  |
@@ -28,7 +28,7 @@ In this test we will compare networks of different sizes. All networks will be t
 
 |                                             | (50)   | (100)  | (200)   | (300)   | (300,100) |
 | ------------------------------------------- | ------ | ------ | ------- | ------- | --------- |
-| Accuracy on full test set                   | 86.11% | 89.02% | 90.16%  | 91.58%  | 84.89%    |
+| Accuracy on full test set (x86)             | 86.11% | 89.02% | 90.16%  | 91.58%  | 84.89%    |
 | Binary size                                 | 579kB  | 738kB  | 1.03 MB | 1.37 MB | 1.49 MB   |
 | Accuracy on first 50 images of the test set | 88%    | 94%    | 94%     | 94%     | 84%       |
 | Inference time                              | 12.6s  | 24.89s | 49.47s  | 74.05s  | 83.71s    |
@@ -44,7 +44,7 @@ In this test we prune a network with 300 hidden neurons which was trained for 2 
 
 |                                             | Original | Pruned |
 | ------------------------------------------- | -------- | ------ |
-| Accuracy on full test set                   | 92.97%   | 91.89% |
+| Accuracy on full test set (x86)             | 92.97%   | 91.89% |
 | Binary size                                 | 1.37 MB  | 737 kB |
 | Accuracy on first 50 images of the test set | 96%      | 94%    |
 | Inference time                              | 73.66s   | 24.77s |
@@ -59,7 +59,7 @@ We quantize the 300 hidden neuron network from the previous test:
 
 |                                             | Original | Quantized |
 | ------------------------------------------- | -------- | --------- |
-| Accuracy on full test set                   | 92.97%   | 10.81%    |
+| Accuracy on full test set (x86)             | 92.97%   | 10.81%    |
 | Binary size                                 | 1.37 MB  | 689 kB    |
 | Accuracy on first 50 images of the test set | 96%      | 12%       |
 | Inference time                              | 73.66s   | 73.45s    |
