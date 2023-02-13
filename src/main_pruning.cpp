@@ -67,17 +67,15 @@ int main() {
 
   // without pruning
   auto model = nn::Sequential<float>();
-  model.add(nn::Linear<float>(28 * 28, 50));
+  model.add(nn::Linear<float>(28 * 28, 20));
   model.add(nn::Sigmoid<float>());
-  model.add(nn::Linear<float>(50, 10));
+  model.add(nn::Linear<float>(20, 10));
   model.init();
   auto optimizer = nn::SGD<float>(model.params(), 0.01);
 
-  for (int epoch = 0; epoch < 2; ++epoch) {
+  for (int epoch = 0; epoch < 3; ++epoch) {
     train_one_epoch(mnist, optimizer, model, epoch);
   }
-
-  evaluate<float>(model);
 
   // with pruning
   auto model2 = nn::Sequential<float>();
@@ -86,14 +84,15 @@ int main() {
   model2.add(nn::Linear<float>(100, 10));
   model2.init();
 
-  auto optimizer2 = nn::SGD<float>(model.params(), 0.01);
+  auto optimizer2 = nn::SGD<float>(model2.params(), 0.01);
 
   train_one_epoch(mnist, optimizer2, model2, 0);
 
-  for (int i = 0; i < 50; ++i) {
+  for (int i = 0; i < 80; ++i) {
     model2.prune_one_neuron();
   }
   train_one_epoch(mnist, optimizer2, model2, 1);
+  train_one_epoch(mnist, optimizer2, model2, 2);
 
   std::cout << "Evaluation of model without pruning" << std::endl;
   evaluate<float>(model);
