@@ -175,7 +175,7 @@ std::vector<std::pair<Tensor<T>, Tensor<T>>> Tensor<T>::backprop_step(const Tens
     result.emplace_back(std::make_pair(history_->inputs[i], history_->inputs[i].expand(y[i])));
   }
   return result;
-};
+}
 
 template <typename T>
 Tensor<T> Tensor<T>::expand(const Tensor<T>& other) const {

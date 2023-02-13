@@ -43,7 +43,7 @@ Strides shape_to_strides(const Shape& shape) {
   }
   std::reverse(strides.begin(), strides.end());
   return strides;
-};
+}
 
 void broadcasted_to_index_in_shape(const Indices& index, const Shape& shape, Indices& out_index) {
   out_index.clear();
