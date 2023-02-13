@@ -1,7 +1,6 @@
 #pragma once
 
-#include <endian.h>
-
+#include <climits>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -13,6 +12,22 @@
 namespace fs = std::filesystem;
 
 namespace nn {
+
+template <typename E>
+E swap_endian(E u) {
+  static_assert(CHAR_BIT == 8, "CHAR_BIT != 8");
+
+  union {
+    E u;
+    unsigned char u8[sizeof(E)];
+  } source, dest;
+
+  source.u = u;
+
+  for (size_t k = 0; k < sizeof(E); k++) dest.u8[k] = source.u8[sizeof(E) - k - 1];
+
+  return dest.u;
+}
 
 using namespace tensor;
 
@@ -89,7 +104,7 @@ class MnistDataset : public Dataset<Tensor<T>, Tensor<T>> {
     file.read(reinterpret_cast<char*>(&data_type), sizeof(data_type));
     file.read(reinterpret_cast<char*>(&ndim), sizeof(ndim));
     file.read(reinterpret_cast<char*>(&count), sizeof(count));
-    count = be32toh(count);
+    count = swap_endian<std::uint32_t>(count);
 
     assert(_magic == 0 && "First two magic bytes must be 0.");
     assert(data_type == 8 && "Expected data type ubyte.");
@@ -100,8 +115,8 @@ class MnistDataset : public Dataset<Tensor<T>, Tensor<T>> {
       std::uint32_t dim2;
       file.read(reinterpret_cast<char*>(&size), sizeof(size));
       file.read(reinterpret_cast<char*>(&dim2), sizeof(dim2));
-      size = be32toh(size);
-      dim2 = be32toh(dim2);
+      size = swap_endian<std::uint32_t>(size);
+      dim2 = swap_endian<std::uint32_t>(dim2);
       assert(size == dim2 && "Expected square dimensions.");
     }
 

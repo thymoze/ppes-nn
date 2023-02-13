@@ -1,36 +1,41 @@
 #include <algorithm>
 #include <iostream>
+#include <nn/all.hpp>
 #include <nn/dataset/mnist_dataset.hpp>
-#include <nn/modules/linear.hpp>
-#include <nn/modules/sigmoid.hpp>
-#include <nn/mse.hpp>
-#include <nn/optim/sgd.hpp>
-#include <nn/sequential.hpp>
-#include <tuple>
 
-extern const std::uint8_t _binary_train_images_idx3_ubyte_start[];
-extern const std::uint8_t _binary_train_images_idx3_ubyte_end[];
+#include "../trained_models/mnist_float_100.hpp"
 
-extern const std::uint8_t _binary_train_labels_idx1_ubyte_start[];
-extern const std::uint8_t _binary_train_labels_idx1_ubyte_end[];
+extern const std::uint8_t _binary_t50_images_idx3_ubyte_start[];
+extern const std::uint8_t _binary_t50_images_idx3_ubyte_end[];
+
+extern const std::uint8_t _binary_t50_labels_idx1_ubyte_start[];
+extern const std::uint8_t _binary_t50_labels_idx1_ubyte_end[];
 
 int main() {
+  auto model = nn::Sequential<float>();
+  model.add(nn::Linear<float>(28 * 28, 100));
+  model.add(nn::Sigmoid<float>());
+  model.add(nn::Linear<float>(100, 10));
+  model.init(mnist_model::mnist_model, mnist_model::mnist_model_len);
+
+  std::cout << "Loading dataset..." << std::endl;
   auto mnist =
-      nn::MnistDataset<double>(const_cast<std::uint8_t*>(&_binary_train_images_idx3_ubyte_start[0]),
-                       const_cast<std::uint8_t*>(&_binary_train_images_idx3_ubyte_end[0]),
-                       const_cast<std::uint8_t*>(&_binary_train_labels_idx1_ubyte_start[0]),
-                       const_cast<std::uint8_t*>(&_binary_train_labels_idx1_ubyte_end[0]));
+      nn::MnistDataset<float>(const_cast<std::uint8_t*>(&_binary_t50_images_idx3_ubyte_start[0]),
+                              const_cast<std::uint8_t*>(&_binary_t50_images_idx3_ubyte_end[0]),
+                              const_cast<std::uint8_t*>(&_binary_t50_labels_idx1_ubyte_start[0]),
+                              const_cast<std::uint8_t*>(&_binary_t50_labels_idx1_ubyte_end[0]), 1);
 
-  nn::Matrix<double> img, label;
+  std::cout << "Starting evaluation..." << std::endl;
+  int correct = 0;
+  for (auto&& [img, label] : mnist) {
+    auto input = img.view({1, 28 * 28});
 
-  for (int idx = 0; idx < 4; idx++) {
-    std::tie(img, label) = mnist.get(idx);
-    std::cout << label(0, 0) << std::endl;
-    for (std::size_t i = 0; i < img.rows(); i++) {
-      for (std::size_t j = 0; j < img.cols(); j++) {
-        std::cout << (img(i, j) == 0 ? "." : "@");
-      }
-      std::cout << std::endl;
+    auto out = model(input);
+
+    auto output = tensor::argmax(out, 1);
+    if (output.item() == label.item()) {
+      ++correct;
     }
   }
+  std::cout << "Accuracy: " << (float)correct / mnist.count() << std::endl;
 }

@@ -7,7 +7,7 @@ function(ADD_COMPILE_LINK_EXECUTABLE EXE_NAME MAIN_FILE)
       $<$<CONFIG:Debug>:-g -fsanitize=address,undefined>
   )
   target_link_options(${EXE_NAME}
-    PRIVATE
+    PRIVATE -pthread
       $<$<CONFIG:Debug>:-fsanitize=address,undefined>
   )
 endfunction()
@@ -20,4 +20,7 @@ else()
 
   ADD_COMPILE_LINK_EXECUTABLE(mnist_train mnist_train.cpp)
   ADD_COMPILE_LINK_EXECUTABLE(mnist_pretrained mnist_pretrained.cpp)
+
+  ADD_COMPILE_LINK_EXECUTABLE(mnist_bin mnist_bin.cpp)
+  link_binary(mnist_bin t50-images-idx3-ubyte t50-labels-idx1-ubyte)
 endif()

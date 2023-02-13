@@ -1,3 +1,4 @@
 *
 !.gitignore
 !download_mnist.sh
+!split_mnist_test.sh
