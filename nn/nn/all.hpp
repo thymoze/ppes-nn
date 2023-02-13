@@ -1,6 +1,6 @@
 #pragma once
 
-#include <nn/loss/loss.hpp>
+#include <nn/loss/mse.hpp>
 #include <nn/module.hpp>
 #include <nn/modules/linear.hpp>
 #include <nn/modules/relu.hpp>

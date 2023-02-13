@@ -7,7 +7,8 @@ build:
     - apt update && apt install -y cmake/bullseye-backports
   script:
     - mkdir -p build && cd build
-    - cmake .. && make
+    - cmake -DCMAKE_BUILD_TYPE=Debug ..
+    - make
   artifacts:
     paths:
       - build/

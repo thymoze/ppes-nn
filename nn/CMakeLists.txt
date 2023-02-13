@@ -6,9 +6,11 @@ add_library(nn
   nn/modules/softmax.hpp
   nn/modules/relu.hpp
   nn/optim/sgd.hpp
-  nn/loss/loss.hpp
+  nn/loss/mse.hpp
   nn/dataset/dataset.hpp
   nn/dataset/mnist_dataset.hpp
+  nn/quantization/quantization.hpp
+  nn/quantization/modules/quantized_linear.hpp
   nn/all.hpp
 
   tensor/tensor.hpp
@@ -17,19 +19,13 @@ add_library(nn
   tensor/tensor_functions.hpp
   tensor/tensor_util.hpp
   tensor/autodiff.hpp
+  tensor/quantization/quantization.hpp
+  tensor/quantization/quantized_ops.hpp
+  tensor/quantization/quantized_tensor.hpp
 )
 
 target_include_directories(nn
   PUBLIC .
-)
-
-target_compile_options(nn
-  PRIVATE
-    -Wall -Wextra -Wpedantic -std=c++17 -g -O3 # -fsanitize=address -fsanitize=undefined
-)
-target_link_options(nn
-  PRIVATE
-    #-fsanitize=address -fsanitize=undefined
 )
 
 set_target_properties(nn PROPERTIES LINKER_LANGUAGE CXX)

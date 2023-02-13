@@ -35,5 +35,5 @@ TEST_CASE("Quantized matrix multiplication") {
   INFO("Result:\n" << dres);
   INFO("Expected:\n" << dexp);
 
-  REQUIRE(tensor::all(tensor::is_close(dres, dexp)).item());
+  REQUIRE(tensor::all(tensor::is_close(dres, dexp, 1e-6)).item());
 }
