@@ -92,6 +92,24 @@ class Sequential : public Module<T> {
   bool is_prunable() override { return false; }
   bool is_linear() override { return false; }
 
+  void prune(int amount) {
+    for (int i = 0; i < amount; ++i) {
+      prune_one_neuron();
+    }
+    std::cout << "Pruned " << amount << " Neurons" << std::endl
+              << "Current model structure:" << std::endl
+              << to_string() << std::endl;
+  }
+
+  std::string to_string() override {
+    std::stringstream stream;
+    stream << "auto model = nn::Sequential<T>();" << std::endl;
+    for (auto& m : modules_) {
+      stream << "model.add(" << m->to_string() << ");" << std::endl;
+    }
+    return stream.str();
+  }
+
   std::vector<std::uint8_t> data() override {
     std::vector<std::uint8_t> data;
     for (auto& mod : modules_) {

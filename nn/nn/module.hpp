@@ -63,6 +63,8 @@ class Module {
 
   virtual std::vector<std::uint8_t> data() = 0;
 
+  virtual std::string to_string() = 0;
+
   void save(const std::string& path, const std::string& name) {
     auto stream = std::ofstream(path, std::ios::trunc);
     stream << "#pragma once\n\n";

@@ -30,6 +30,8 @@ class Sigmoid : public Module<T> {
 
   std::vector<std::uint8_t> data() override { return {}; }
 
+  std::string to_string() override { return "nn::Sigmoid<T>()"; }
+
  private:
 };
 

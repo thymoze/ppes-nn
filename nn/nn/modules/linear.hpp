@@ -101,6 +101,12 @@ class Linear : public Module<T> {
     num_out_ -= 1;
   }
 
+  std::string to_string() override {
+    std::stringstream stream;
+    stream << "nn::Linear<T>(" << num_in_ << ", " << num_out_ << ")";
+    return stream.str();
+  }
+
   bool is_linear() override { return true; }
 
   std::size_t num_in() const { return num_in_; }

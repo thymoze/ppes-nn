@@ -71,6 +71,7 @@ int main() {
   model.add(nn::Sigmoid<float>());
   model.add(nn::Linear<float>(20, 10));
   model.init();
+
   auto optimizer = nn::SGD<float>(model.params(), 0.01);
 
   for (int epoch = 0; epoch < 3; ++epoch) {
@@ -88,9 +89,8 @@ int main() {
 
   train_one_epoch(mnist, optimizer2, model2, 0);
 
-  for (int i = 0; i < 80; ++i) {
-    model2.prune_one_neuron();
-  }
+  model2.prune(80);
+
   train_one_epoch(mnist, optimizer2, model2, 1);
   train_one_epoch(mnist, optimizer2, model2, 2);
 

@@ -87,6 +87,12 @@ class QLinear : public Linear<T> {
     return result;
   }
 
+  std::string to_string() override {
+    std::stringstream stream;
+    stream << "QLinear<T>(" << this->num_in_ << ", " << this->num_out_ << ")";
+    return stream.str();
+  }
+
   Tensor<T> forward(const Tensor<T>& input) override {
     auto weights = this->params_[0];
     auto bias = this->params_[1];

@@ -21,6 +21,8 @@ class Softmax : public Module<T> {
 
   std::vector<std::uint8_t> data() override { return {}; }
 
+  std::string to_string() override { return "nn::Softmax<T>()"; }
+
  private:
   std::optional<std::size_t> dim_;
 };
