@@ -33,6 +33,11 @@ cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_PICO=1 ..
 
 This will automatically clone the Pico SDK, including required subprojects like tinyusb.
 
+To flash an application to the Pico run
+```sh
+make upload_<TARGET> # e.g. upload_mnist_pico
+```
+
 ### Tests
 
 To build the unit-tests make sure you have not configured cmake with the `BUILD_PICO` flag enabled as that will disable the test targets. Then it is as simple as calling
