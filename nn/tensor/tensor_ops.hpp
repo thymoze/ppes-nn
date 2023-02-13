@@ -247,7 +247,7 @@ class TensorBackend {
 
   void max_reduce_out(const Tensor<T>& t, std::size_t dim, Tensor<T>& out) const {
     return ops_->reduce([](auto l, auto r) { return std::max(l, r); },
-                        std::numeric_limits<T>::min())(t, dim, out);
+                        std::numeric_limits<T>::lowest())(t, dim, out);
   }
   [[nodiscard]] Tensor<T> max_reduce(const Tensor<T>& t, std::size_t dim) const {
     auto shape = t.shape();
@@ -262,7 +262,7 @@ class TensorBackend {
         [](auto l, auto r, auto l_idx, auto r_idx) {
           return l >= r ? std::pair{l, l_idx} : std::pair{r, r_idx};
         },
-        std::numeric_limits<T>::min())(t, dim, out);
+        std::numeric_limits<T>::lowest())(t, dim, out);
   }
   [[nodiscard]] Tensor<T> argmax_reduce(const Tensor<T>& t, std::size_t dim) const {
     auto shape = t.shape();
@@ -288,8 +288,10 @@ class TensorBackend {
   }
 
   [[nodiscard]] Tensor<T> matrix_multiply(const Tensor<T>& a, const Tensor<T>& b) const {
-    assert(*(a.shape().end() - 1) == *(b.shape().end() - 2) &&
-           "Matrix multiplication dimensions don't match.");
+    if (*(a.shape().end() - 1) != *(b.shape().end() - 2)) {
+      throw std::logic_error("Matrix multiplication dimensions don't match: " +
+                             to_string(a.shape()) + " and " + to_string(b.shape()));
+    }
 
     Tensor<T> lhs = a.ndims() == 2 ? a.unsqueeze(0) : a;
     Tensor<T> rhs = b.ndims() == 2 ? b.unsqueeze(0) : b;

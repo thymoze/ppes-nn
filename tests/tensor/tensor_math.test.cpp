@@ -4,6 +4,7 @@
 #include <tensor/tensor.hpp>
 
 using Catch::Matchers::AllMatch;
+using Catch::Matchers::ContainsSubstring;
 using Catch::Matchers::RangeEquals;
 using Catch::Matchers::WithinRel;
 
@@ -135,6 +136,22 @@ TEST_CASE("Sum") {
   CHECK_THAT(*sum_2.data(), RangeEquals(std::vector<int>{10, 26, 42, 58, 74, 90}));
 }
 
+TEST_CASE("Absolute Sum") {
+  auto t = tensor::make<float>({2, 3}, {-4, 1, -9, 2, -1, 2});
+
+  auto sum_all = tensor::abssum(t);
+  CHECK_THAT(sum_all.shape(), RangeEquals(std::vector<int>{1}));
+  CHECK_THAT(*sum_all.data(), RangeEquals(std::vector<float>{19}));
+
+  auto sum_0 = tensor::abssum(t, 0);
+  CHECK_THAT(sum_0.shape(), RangeEquals(std::vector<float>{1, 3}));
+  CHECK_THAT(*sum_0.data(), RangeEquals(std::vector<float>{6, 2, 11}));
+
+  auto sum_1 = tensor::abssum(t, 1);
+  CHECK_THAT(sum_1.shape(), RangeEquals(std::vector<int>{2, 1}));
+  CHECK_THAT(*sum_1.data(), RangeEquals(std::vector<float>{14, 5}));
+}
+
 TEST_CASE("Mean") {
   std::vector<float> data(2 * 3 * 4);
   std::iota(data.begin(), data.end(), 1);
@@ -224,4 +241,71 @@ TEST_CASE("Broadcasting matrix multiplication") {
   auto res = tensor::matmul(l, r);
   CHECK_THAT(res.shape(), RangeEquals(std::vector<int>{4, 4, 2, 2}));
   CHECK(tensor::sum(res).item() == 30128);
+
+  auto r2 = tensor::zeros<float>({5, 5});
+  CHECK_THROWS_WITH(tensor::matmul(l, r2), ContainsSubstring("dimensions don't match"));
+}
+
+TEST_CASE("Maximum") {
+  auto t = tensor::make<float>({2, 3}, {4, -1, 9, 2, -2, 2});
+
+  auto max_all = tensor::max(t);
+  CHECK_THAT(max_all.shape(), RangeEquals(std::vector<int>{1}));
+  CHECK_THAT(*max_all.data(), RangeEquals(std::vector<float>{9}));
+
+  auto max_0 = tensor::max(t, 0);
+  CHECK_THAT(max_0.shape(), RangeEquals(std::vector<float>{1, 3}));
+  CHECK_THAT(*max_0.data(), RangeEquals(std::vector<float>{4, -1, 9}));
+
+  auto max_1 = tensor::max(t, 1);
+  CHECK_THAT(max_1.shape(), RangeEquals(std::vector<int>{2, 1}));
+  CHECK_THAT(*max_1.data(), RangeEquals(std::vector<float>{9, 2}));
+}
+
+TEST_CASE("Minimum") {
+  auto t = tensor::make<float>({2, 3}, {4, 1, 9, 2, -1, 2});
+
+  auto min_all = tensor::min(t);
+  CHECK_THAT(min_all.shape(), RangeEquals(std::vector<int>{1}));
+  CHECK_THAT(*min_all.data(), RangeEquals(std::vector<float>{-1}));
+
+  auto min_0 = tensor::min(t, 0);
+  CHECK_THAT(min_0.shape(), RangeEquals(std::vector<float>{1, 3}));
+  CHECK_THAT(*min_0.data(), RangeEquals(std::vector<float>{2, -1, 2}));
+
+  auto min_1 = tensor::min(t, 1);
+  CHECK_THAT(min_1.shape(), RangeEquals(std::vector<int>{2, 1}));
+  CHECK_THAT(*min_1.data(), RangeEquals(std::vector<float>{1, -1}));
+}
+
+TEST_CASE("Argmax") {
+  auto t = tensor::make<float>({2, 3}, {5, -3, 3, -4, -2, 7});
+
+  auto max_all = tensor::argmax(t);
+  CHECK_THAT(max_all.shape(), RangeEquals(std::vector<int>{1}));
+  CHECK_THAT(*max_all.data(), RangeEquals(std::vector<float>{5}));
+
+  auto max_0 = tensor::argmax(t, 0);
+  CHECK_THAT(max_0.shape(), RangeEquals(std::vector<float>{1, 3}));
+  CHECK_THAT(*max_0.data(), RangeEquals(std::vector<float>{0, 1, 1}));
+
+  auto max_1 = tensor::argmax(t, 1);
+  CHECK_THAT(max_1.shape(), RangeEquals(std::vector<int>{2, 1}));
+  CHECK_THAT(*max_1.data(), RangeEquals(std::vector<float>{0, 2}));
+}
+
+TEST_CASE("Argmin") {
+  auto t = tensor::make<float>({2, 3}, {5, -3, 3, -4, -2, 7});
+
+  auto min_all = tensor::argmin(t);
+  CHECK_THAT(min_all.shape(), RangeEquals(std::vector<int>{1}));
+  CHECK_THAT(*min_all.data(), RangeEquals(std::vector<float>{3}));
+
+  auto min_0 = tensor::argmin(t, 0);
+  CHECK_THAT(min_0.shape(), RangeEquals(std::vector<float>{1, 3}));
+  CHECK_THAT(*min_0.data(), RangeEquals(std::vector<float>{1, 0, 0}));
+
+  auto min_1 = tensor::argmin(t, 1);
+  CHECK_THAT(min_1.shape(), RangeEquals(std::vector<int>{2, 1}));
+  CHECK_THAT(*min_1.data(), RangeEquals(std::vector<float>{1, 0}));
 }
