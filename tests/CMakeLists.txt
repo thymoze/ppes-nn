@@ -32,6 +32,7 @@ test_file(quantized_tensor_test tensor/quantization/quantized_tensor.test)
 test_file(loss_test nn/loss/loss.test)
 test_file(linear_test nn/modules/linear.test)
 test_file(relu_test nn/modules/relu.test)
+test_file(sequential_test nn/sequential.test)
 
 ################
 
