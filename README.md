@@ -8,6 +8,15 @@ The goal of the project was to implement a basic neural network library to train
 
 The project is split into a library component containing all the neural-network functionality in the `nn` folder, unit tests in `tests` and applications building on the library in `src`. 
 
+### Getting the MNIST data
+
+You can use the `download_mnist.sh` script in `data/` to automatically download the MNIST dataset. Some programs require a subset of the MNIST test set (in particular all for the Pico). To obtain this use the `split_mnist_test.sh` script after downloading the dataset:
+```sh
+cd data
+./split_mnist_test.sh 50
+```
+This will create a new dataset `t50-*` containing only the first 50 images and labels from the test dataset.
+
 ### Building on x86
 
 Building on x86 is fairly straight-forward, cmake is used as a build-configuration tool.

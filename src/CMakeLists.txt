@@ -23,6 +23,9 @@ else()
   ADD_COMPILE_LINK_EXECUTABLE(mnist_pretrained mnist_pretrained.cpp)
 
   ADD_COMPILE_LINK_EXECUTABLE(mnist_bin mnist_bin.cpp)
+  # Exclude as this requires data files to be present
+  set_target_properties(mnist_bin PROPERTIES EXCLUDE_FROM_ALL=true)
+
   ADD_COMPILE_LINK_EXECUTABLE(main_pruning main_pruning.cpp)
   link_binary(mnist_bin t50-images-idx3-ubyte t50-labels-idx1-ubyte)
 endif()
