@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
+include(cmake/link_binary.cmake)
+
 if(BUILD_PICO)
   set(BUILD_TESTING false)
   include(cmake/pico_sdk.cmake)
