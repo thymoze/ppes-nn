@@ -24,6 +24,7 @@ function(link_binary target)
   set_target_properties(${target}_bin
     PROPERTIES
       LINKER_LANGUAGE C
+      EXCLUDE_FROM_ALL true
   )
 
   target_link_libraries(${target} PRIVATE ${target}_bin)
