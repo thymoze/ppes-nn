@@ -6,7 +6,7 @@ This text gives a short overview over the different components, which make up a 
 
 ## Tensor data
 
-This component abstracts the data storage of the tensor aswell as the tensors "view" on the underlying data. Tensors can share their actual data, however each will have their own `TensorData` object. The `TensorData` class contains a pointer to the data, and the shape and strides which are used to index into the array. As such it also defines a bunch of operation to iterpret the underlying data differently by creating a new `TensorData` object with different shape and/or strides, like `permute()` (transposition) and `view()`.
+This component abstracts the data storage of the tensor aswell as the tensors "view" on the underlying data. Tensors can share their actual data, however each will have their own `TensorData` object. The `TensorData` class contains a pointer to the data, and the shape and strides which are used to index into the array. As such it also defines a bunch of operation to interpret the underlying data differently by creating a new `TensorData` object with different shape and/or strides, like `permute()` (transposition) and `view()`.
 
 There are two subclasses of `TensorData` which deal with the actual data storage. `VectorStorage` holds a `shared_ptr<vector<T>>`, i.e. the data is owned by the program and stored in RAM. `PointerStorage` on the other hand is built to support storing tensors in the flash memory of the Pico and only holds a `T*` to the memory address where the data is stored - it has no ownership of the data.
 
@@ -36,6 +36,6 @@ A deeper explanation is beyond the scope here but below are some resources furth
 https://minitorch.github.io/  
 https://pytorch.org/tutorials/beginner/blitz/autograd_tutorial.html  
 https://jax.readthedocs.io/en/latest/notebooks/autodiff_cookbook.html  
-https://github.com/MikeInnes/diff-zoo
+https://github.com/MikeInnes/diff-zoo  
 https://github.com/autodiff/autodiff  
 https://github.com/flashlight/flashlight/  

@@ -13,9 +13,9 @@ using tensor::Tensor;
 
 int main(void) {
   auto model = nn::Sequential<float>();
-  model.add(nn::quantization::QLinear<float>(28 * 28, 100));
+  model.add(nn::Linear<float>(28 * 28, 100));
   model.add(nn::Sigmoid<float>());
-  model.add(nn::quantization::QLinear<float>(100, 10));
+  model.add(nn::Linear<float>(100, 10));
   model.init(mnist_model::mnist_model, mnist_model::mnist_model_len);
 
   evaluate<float>(model);

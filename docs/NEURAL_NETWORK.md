@@ -26,7 +26,7 @@ auto optimizer = nn::SGD<float>(model.params(), learning_rate);
 auto output = model(input);
 
 // Calculate the error
-auto loss = nn::mse(output_onehot, target_onehot);
+auto loss = nn::mse(output, target);
 
 // Backward pass and weights update
 loss.backward();
